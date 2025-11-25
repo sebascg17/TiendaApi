@@ -15,6 +15,7 @@ Bash
 
 git clone https://github.com/sebascg17/TiendaApi.git
 cd TiendaApi
+
 2. Configuración de Dependencias
 Restaura los paquetes NuGet necesarios para el proyecto:
 
