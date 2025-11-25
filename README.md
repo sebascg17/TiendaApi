@@ -1,39 +1,79 @@
-📚 Guía de Instalación del Backend (TiendaApi)
-  Este repositorio contiene la API de .NET Core que gestiona la lógica de negocio y la base de datos.
+# 💻 TiendaApi
 
-⚙️ Requisitos Previos
-  Asegúrate de tener instaladas las siguientes herramientas:
-  
-  SDK de .NET: Versión 9.0 o superior (puedes verificarlo ejecutando dotnet --version).
-  
-  Base de Datos: El servidor de base de datos que estés utilizando (ej. SQL Server, PostgreSQL, etc.).
+Este proyecto contiene la **API RESTful** del sistema de tienda, desarrollada con **.NET Core 9.0**.
 
-1. Clonación del Repositorio
-  Abre tu terminal y clona el repositorio del backend. Navega a la carpeta para empezar a trabajar.
-  
-  Bash:  
-  git clone https://github.com/sebascg17/TiendaApi.git
-  cd TiendaApi
+-----
 
-2. Configuración de Dependencias
-  Restaura los paquetes NuGet necesarios para el proyecto:
-  
-  Bash:  
-  dotnet restore
+## ⚙️ Requisitos Previos
 
-3. Configuración de la Base de Datos
-  Debes configurar la conexión a tu base de datos y aplicar los cambios estructurales.
-  
-  Edita el archivo de configuración: Abre appsettings.json (o appsettings.Development.json) y asegúrate de que la sección ConnectionStrings tenga la cadena de conexión correcta a tu base de datos local.
-  
-  Aplica las migraciones (si usas Entity Framework Core para la base de datos):
+Antes de empezar, asegúrate de tener instalado:
 
-  Bash:
-  dotnet ef database update
+  * **SDK de .NET:** Versión **9.0** o superior.
+  * **Base de Datos:** El servidor de base de datos que estés utilizando (ej. SQL Server, PostgreSQL).
 
-4. Ejecución de la API
-  Una vez configurado, puedes ejecutar la aplicación desde la terminal:
-  
-  Bash:
-  dotnet run
-  La API se ejecutará y estará disponible en el puerto especificado en Properties/launchSettings.json (normalmente http://localhost:5237/ o similar). Podrás probarla usando Postman o navegando al endpoint de Swagger si lo tienes configurado.
+-----
+
+## Instalación y Configuración
+
+Para poner la API en funcionamiento localmente, sigue los siguientes pasos.
+
+### 1\. Clonación del Repositorio
+
+Clona el proyecto y navega al directorio:
+
+```bash
+git clone https://github.com/sebascg17/TiendaApi.git
+cd TiendaApi
+```
+
+### 2\. Restauración de Dependencias
+
+Restaura todos los paquetes NuGet necesarios para el proyecto:
+
+```bash
+dotnet restore
+```
+
+### 3\. Configuración de la Base de Datos
+
+1.  **Configura la Conexión:** Abre el archivo **`appsettings.json`** y actualiza la cadena de conexión (`ConnectionStrings`) para apuntar a tu base de datos local.
+2.  **Aplica Migraciones (EF Core):** Si utilizas Entity Framework Core, aplica las migraciones pendientes:
+    ```bash
+    dotnet ef database update
+    ```
+
+-----
+
+## Development server
+
+Para iniciar la API en modo de desarrollo, ejecuta:
+
+```bash
+dotnet run
+```
+
+Una vez en ejecución, la API estará disponible en el puerto especificado en `Properties/launchSettings.json` (generalmente `http://localhost:5xxx`).
+
+## Testing
+
+Para ejecutar los *tests* unitarios del proyecto (si están implementados), usa el siguiente comando:
+
+```bash
+dotnet test
+```
+
+## Building
+
+Para compilar el proyecto y generar los artefactos de producción (binarios), ejecuta:
+
+```bash
+dotnet build --configuration Release
+```
+
+Esto compilará tu proyecto y guardará los archivos `.dll` resultantes en el directorio `bin/Release/net9.0/publish`.
+
+-----
+
+## Additional Resources
+
+Para más información sobre los comandos del SDK de .NET, visita la [referencia oficial del comando `dotnet`](https://www.google.com/search?q=%5Bhttps://learn.microsoft.com/es-es/dotnet/core/tools/dotnet%5D\(https://learn.microsoft.com/es-es/dotnet/core/tools/dotnet\)).
