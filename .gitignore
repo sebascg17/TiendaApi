@@ -1,0 +1,29 @@
+# ==================================
+# Visual Studio / .NET Core (Backend - TiendaApi)
+# ==================================
+## Binarios y Objetos
+[Bb]in/
+[Oo]bj/
+
+## Paquetes NuGet
+[Pp]ackages/
+*.nupkg
+.vs/
+*.suo
+*.user
+*.config
+*.pdb
+*.pidb
+*.dll
+*.exe
+*.log
+*.ncb
+*.scc
+*.userprefs
+
+## Configuraciones Sensibles
+# La clave JWT y secretos de DB no deben ir al repo
+*.usersecrets
+appsettings.Development.json
+appsettings.Staging.json
+appsettings.Production.json

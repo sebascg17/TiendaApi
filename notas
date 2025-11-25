@@ -1,0 +1,26 @@
+[
+  {
+  "email": "sebastian@test.com",
+  "passwordHash": "MiClaveSegura123"
+  },
+  {
+    "nombre": "Sebastian",
+    "email": "sebasadmin@gmail.com",
+    "passwordHash": "Sebas123",
+    "rol": "Admin"
+  }, 
+  {
+    "email": "sebasadmin@gmail.com",
+    "passwordHash": "Sebas123"
+  },
+  {
+    "nombre": "Manuela",
+    "email": "manuuser@gmail.com",
+    "passwordHash": "Manu123",
+    "rol": "User"
+  },
+  {
+    "email": "manuuser@gmail.com",
+    "passwordHash": "Manu123"
+  }
+]
