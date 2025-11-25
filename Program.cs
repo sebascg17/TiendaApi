@@ -3,8 +3,43 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Infrastructure; // donde tengas AppDbContext
+using FirebaseAdmin;
+using Google.Apis.Auth.OAuth2;
 
 var builder = WebApplication.CreateBuilder(args);
+
+var firebaseConfigPath = Path.Combine(AppContext.BaseDirectory, "firebase-key.json");
+
+const string MyCorsPolicy = "AngularPolicy";
+
+// Verifica si el archivo de configuración existe antes de inicializar
+if (File.Exists(firebaseConfigPath))
+{
+    FirebaseApp.Create(new AppOptions()
+    {
+        // Usa GoogleCredential para cargar la clave privada desde el archivo JSON
+        Credential = GoogleCredential.FromFile(firebaseConfigPath)
+    });
+    Console.WriteLine("Firebase Admin SDK inicializado correctamente.");
+}
+else
+{
+    Console.WriteLine("ADVERTENCIA: Archivo firebase-key.json no encontrado. La autenticación de Firebase fallará.");
+    // Opcional: Podrías lanzar una excepción si las credenciales son obligatorias.
+}
+
+
+builder.Services.AddCors(options =>
+{
+    options.AddPolicy(name: MyCorsPolicy,
+                      policy =>
+                      {
+                          // 🔑 Permitir explícitamente el origen de Angular
+                          policy.WithOrigins("http://localhost:4200") 
+                                .AllowAnyHeader()  // Permitir headers como 'Authorization', 'Content-Type'
+                                .AllowAnyMethod(); // Permitir métodos como POST, GET
+                      });
+});
 
 // 🔹 Configurar DbContext con SQL Server
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -34,6 +69,8 @@ builder.Services.AddControllers()
     {
         options.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
     });
+
+
 
 builder.Services.AddAuthorization();
 builder.Services.AddControllers();
@@ -80,6 +117,8 @@ app.UseSwaggerUI(c =>
     c.SwaggerEndpoint("/swagger/v1/swagger.json", "Tienda API V1");
     c.RoutePrefix = "swagger"; // URL: http://localhost:5237/swagger
 });
+
+app.UseCors(MyCorsPolicy);
 
 app.UseAuthentication(); // ⚡ Importante: antes de UseAuthorization
 app.UseAuthorization();

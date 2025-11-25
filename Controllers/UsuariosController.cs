@@ -8,6 +8,9 @@ using TiendaApi.Models;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.DTOs.Usuarios;
+using FirebaseAdmin.Auth; // Necesario para VerifyIdTokenAsync
+using TiendaApi.Models;
+using TiendaApi.DTOs.Usuarios;
 
 namespace TiendaApi.Controllers
 {
@@ -203,6 +206,106 @@ namespace TiendaApi.Controllers
             });
 
             return Ok(claims);
+        }
+        
+
+        // ✅ LOGIN CON GOOGLE/FIREBASE
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromBody] FirebaseTokenDto dto)
+        {
+            if (string.IsNullOrEmpty(dto.IdToken))
+            {
+                return BadRequest("Se requiere el ID Token de Firebase.");
+            }
+
+            try
+            {
+                // 1. Verificar el ID Token con el SDK de Firebase Admin
+                // El SDK ya fue inicializado en Program.cs
+                FirebaseToken decodedToken = await FirebaseAuth.DefaultInstance
+                    .VerifyIdTokenAsync(dto.IdToken);
+
+                // 2. Obtener la información del usuario de Google
+                string email = decodedToken.Claims.ContainsKey("email") ? decodedToken.Claims["email"].ToString() : null;
+                string nombre = decodedToken.Claims.ContainsKey("name") ? decodedToken.Claims["name"].ToString() : "Usuario Google";
+                
+                if (string.IsNullOrEmpty(email))
+                {
+                    return BadRequest("El token de Google no contiene un correo electrónico válido.");
+                }
+
+                // 3. Buscar/Crear usuario en tu Base de Datos
+                var usuario = await _context.Usuarios
+                    .Include(u => u.UsuarioRoles)
+                    .ThenInclude(ur => ur.Rol)
+                    .FirstOrDefaultAsync(u => u.Email == email);
+
+                if (usuario == null)
+                {
+                    // El usuario no existe: lo registramos automáticamente.
+                    usuario = new Usuario
+                    {
+                        Nombre = nombre,
+                        Email = email,
+                        // No necesitamos hash de contraseña, ya que usa Firebase/Google Auth
+                        PasswordHash = null
+                    };
+                    _context.Usuarios.Add(usuario);
+                    await _context.SaveChangesAsync();
+                    
+                    // Opcional: Asignar un rol por defecto al registrarse con Google
+                    var rolCliente = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == "Cliente");
+                    if (rolCliente != null)
+                    {
+                        _context.UsuarioRoles.Add(new UsuarioRol { UsuarioId = usuario.Id, RolId = rolCliente.Id });
+                        await _context.SaveChangesAsync();
+                    }
+                }
+                
+                // 4. Generar el JWT interno (Usando la lógica que ya tienes en Login)
+
+                var roles = usuario.UsuarioRoles.Select(ur => ur.Rol.Nombre).ToList();
+                
+                // Claims del token
+                var claims = new List<Claim>
+                {
+                    new Claim(JwtRegisteredClaimNames.Sub, usuario.Email),
+                    new Claim("id", usuario.Id.ToString())
+                };
+
+                foreach (var rol in roles)
+                    claims.Add(new Claim(ClaimTypes.Role, rol));
+
+                // Generar token JWT (la misma lógica de tu método 'Login')
+                var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]));
+                var creds = new SigningCredentials(key, SecurityAlgorithms.HmacSha256);
+
+                var token = new JwtSecurityToken(
+                    issuer: _config["Jwt:Issuer"],
+                    audience: _config["Jwt:Audience"],
+                    claims: claims,
+                    expires: DateTime.Now.AddHours(2), // O el tiempo de expiración que desees
+                    signingCredentials: creds
+                );
+
+                // 5. Devolver el JWT de tu API al Frontend
+                return Ok(new
+                {
+                    token = new JwtSecurityTokenHandler().WriteToken(token),
+                    expiration = token.ValidTo,
+                    roles
+                });
+            }
+            catch (FirebaseAuthException ex)
+            {
+                // El token es inválido (expirado, malformado, etc.)
+                return Unauthorized(new { message = $"Token de Firebase inválido: {ex.Message}" });
+            }
+            catch (Exception ex)
+            {
+                // Otros errores, como problemas de base de datos o internos
+                return StatusCode(500, new { message = $"Error interno al procesar el login de Google: {ex.Message}" });
+            }
         }
     }
 }
