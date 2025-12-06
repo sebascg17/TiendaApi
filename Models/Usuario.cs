@@ -27,6 +27,9 @@ namespace TiendaApi.Models
         [Required]
         public string Estado { get; set; } = "Activo"; // Activo, Inactivo, Suspendido
 
+        public string? VerificationToken { get; set; }
+        public bool IsVerified { get; set; } = false;
+
         [Range(0, double.MaxValue)]
         public decimal Saldo { get; set; } = 0;
 

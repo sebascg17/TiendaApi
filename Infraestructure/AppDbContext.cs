@@ -99,7 +99,7 @@ namespace TiendaApi.Infrastructure
 
             modelBuilder.Entity<Comision>()
                 .HasOne(c => c.Referido)
-                .WithMany()
+                .WithMany(r => r.Comisiones)
                 .HasForeignKey(c => c.ReferidoId)
                 .OnDelete(DeleteBehavior.SetNull);
 
@@ -132,11 +132,19 @@ namespace TiendaApi.Infrastructure
             // ======== TIENDA - PLAN ========
             modelBuilder.Entity<Tienda>()
                 .HasOne(t => t.Plan)
-                .WithMany()
+                .WithMany(p => p.Tiendas)
                 .HasForeignKey(t => t.PlanId)
                 .OnDelete(DeleteBehavior.SetNull);
 
             // ======== PRECISIONES DECIMALES ========
+            modelBuilder.Entity<Usuario>()
+                .Property(u => u.Saldo)
+                .HasPrecision(18, 2);
+
+            modelBuilder.Entity<Plan>()
+                .Property(p => p.PrecioMensual)
+                .HasPrecision(18, 2);
+
             modelBuilder.Entity<Producto>()
                 .Property(p => p.Precio)
                 .HasPrecision(18, 2);

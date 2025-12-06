@@ -19,6 +19,7 @@ namespace TiendaApi.Controllers
         {
             var pedido = new Pedido
             {
+                TiendaId = dto.TiendaId,
                 ClienteNombre = dto.Cliente,
                 ClienteEmail = dto.Email,
                 Estado = EstadoPedido.Pendiente, // 👈 valor por defecto
@@ -56,6 +57,35 @@ namespace TiendaApi.Controllers
                     PrecioUnitario = d.PrecioUnitario
                 }).ToList()
             });
+        }
+
+        // GET: api/pedidos/tienda/{tiendaId}
+        [HttpGet("tienda/{tiendaId}")]
+        public async Task<ActionResult<IEnumerable<PedidoReadDto>>> GetPedidosPorTienda(int tiendaId)
+        {
+            var pedidos = await _db.Pedidos
+                .Where(p => p.TiendaId == tiendaId)
+                .Include(p => p.Detalles)
+                .OrderByDescending(p => p.Fecha)
+                .Select(p => new PedidoReadDto
+                {
+                    Id = p.Id,
+                    Cliente = p.ClienteNombre,
+                    Email = p.ClienteEmail,
+                    Fecha = p.Fecha,
+                    Total = p.Total,
+                    Estado = p.Estado,
+                    Detalles = p.Detalles.Select(d => new PedidoDetalleReadDto
+                    {
+                        Id = d.Id,
+                        ProductoId = d.ProductoId,
+                        Cantidad = d.Cantidad,
+                        PrecioUnitario = d.PrecioUnitario
+                    }).ToList()
+                })
+                .ToListAsync();
+
+            return Ok(pedidos);
         }
 
         // PUT: api/pedidos/{id}/estado

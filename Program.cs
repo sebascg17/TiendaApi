@@ -3,8 +3,9 @@ using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using TiendaApi.Infrastructure; // donde tengas AppDbContext
-using FirebaseAdmin;
+using TiendaApi.Services;
 using Google.Apis.Auth.OAuth2;
+using FirebaseAdmin;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -29,15 +30,15 @@ else
 }
 
 
+// 🔹 Configurar DbContext con SQL Server
 builder.Services.AddCors(options =>
 {
     options.AddPolicy(name: MyCorsPolicy,
                       policy =>
                       {
-                          // 🔑 Permitir explícitamente el origen de Angular
-                          policy.WithOrigins("http://localhost:4200") 
-                                .AllowAnyHeader()  // Permitir headers como 'Authorization', 'Content-Type'
-                                .AllowAnyMethod(); // Permitir métodos como POST, GET
+                          policy.WithOrigins("http://localhost:4200", "http://127.0.0.1:4200")
+                                .AllowAnyHeader()
+                                .AllowAnyMethod();
                       });
 });
 
@@ -63,6 +64,9 @@ builder.Services.AddAuthentication("Bearer")
             )
         };
     });
+
+// 🔑 servicios personalizados
+builder.Services.AddScoped<IEmailService, EmailService>();
 
 builder.Services.AddControllers()
     .AddJsonOptions(options =>
