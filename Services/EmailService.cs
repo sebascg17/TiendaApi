@@ -27,7 +27,7 @@ namespace TiendaApi.Services
             // Aquí usamos un mock o valores desde configuration. 
             // IMPORTANTE: El usuario debe configurar appsettings.json
             
-            var fromEmail = _config["Email:From"] ?? "noreply@sfenix.com";
+            var fromEmail = _config["Email:From"] ?? "noreply@sbenix.com";
             var password = _config["Email:Password"];
             var host = _config["Email:Host"] ?? "smtp.gmail.com";
             var port = int.Parse(_config["Email:Port"] ?? "587");
@@ -58,11 +58,11 @@ namespace TiendaApi.Services
 <body>
     <div class='container'>
         <div class='header'>
-            <h1>Verifica tu cuenta SFENIX</h1>
+            <h1>Verifica tu cuenta SBENIX</h1>
         </div>
         <div class='content'>
             <h2>¡Hola {nombre}!</h2>
-            <p>Gracias por registrarte en SFENIX. Para comenzar a usar tu cuenta y activar todas las funciones, por favor confirma tu correo electrónico.</p>
+            <p>Gracias por registrarte en SBENIX. Para comenzar a usar tu cuenta y activar todas las funciones, por favor confirma tu correo electrónico.</p>
             <a href='{verificationLink}' class='btn'>Confirmar Email</a>
             <p style='margin-top:20px; font-size:14px;'>O copia este enlace: <br/> <a href='{verificationLink}'>{verificationLink}</a></p>
         </div>

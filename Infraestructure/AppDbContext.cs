@@ -11,6 +11,8 @@ namespace TiendaApi.Infrastructure
         public DbSet<Usuario> Usuarios => Set<Usuario>();
         public DbSet<Rol> Roles => Set<Rol>();
         public DbSet<UsuarioRol> UsuarioRoles => Set<UsuarioRol>();
+        public DbSet<Permiso> Permisos => Set<Permiso>();
+        public DbSet<RolPermiso> RolPermisos => Set<RolPermiso>();
 
         // 🏪 Tiendas y Planes
         public DbSet<Tienda> Tiendas => Set<Tienda>();
@@ -50,6 +52,20 @@ namespace TiendaApi.Infrastructure
                 .HasOne(ur => ur.Rol)
                 .WithMany(r => r.UsuarioRoles)
                 .HasForeignKey(ur => ur.RolId);
+
+            // ======== ROL - PERMISO (N:N) ========
+            modelBuilder.Entity<RolPermiso>()
+                .HasKey(rp => new { rp.RolId, rp.PermisoId });
+
+            modelBuilder.Entity<RolPermiso>()
+                .HasOne(rp => rp.Rol)
+                .WithMany()
+                .HasForeignKey(rp => rp.RolId);
+
+            modelBuilder.Entity<RolPermiso>()
+                .HasOne(rp => rp.Permiso)
+                .WithMany(p => p.RolPermisos)
+                .HasForeignKey(rp => rp.PermisoId);
 
             // ======== PRODUCTO - CATEGORIA (N:N) ========
             modelBuilder.Entity<ProductoCategoria>()

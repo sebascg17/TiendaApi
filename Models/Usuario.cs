@@ -24,6 +24,14 @@ namespace TiendaApi.Models
         [MaxLength(200)]
         public string? Direccion { get; set; }
 
+        [MaxLength(100)]
+        public string? Ciudad { get; set; }
+
+        [MaxLength(100)]
+        public string? Pais { get; set; }
+
+        public DateTime? FechaNacimiento { get; set; }
+
         [Required]
         public string Estado { get; set; } = "Activo"; // Activo, Inactivo, Suspendido
 

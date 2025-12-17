@@ -129,4 +129,20 @@ app.UseAuthorization();
 
 app.MapControllers();
 
+// 🔹 Inicializar Base de Datos (Seed Roles)
+using (var scope = app.Services.CreateScope())
+{
+    var services = scope.ServiceProvider;
+    try
+    {
+        var context = services.GetRequiredService<AppDbContext>();
+        DbInitializer.Initialize(context);
+    }
+    catch (Exception ex)
+    {
+        var logger = services.GetRequiredService<ILogger<Program>>();
+        logger.LogError(ex, "Ocurrió un error al inicializar la base de datos.");
+    }
+}
+
 app.Run();

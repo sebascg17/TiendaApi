@@ -17,7 +17,7 @@ namespace TiendaApi.Models
         public string Nombre { get; set; } = string.Empty;
 
         [MaxLength(100)]
-        public string? Subdominio { get; set; } // Ej: tienda.sfenix.com
+        public string? Subdominio { get; set; } // Ej: tienda.sbenix.com
 
         [MaxLength(100)]
         public string? Slug { get; set; } // Ej: /tiendas/nombre-tienda
@@ -37,7 +37,7 @@ namespace TiendaApi.Models
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
         [Required, MaxLength(20)]
-        public string Estado { get; set; } = "activo"; // activo, inactivo, pendiente
+        public string Estado { get; set; } = "inactivo"; // activo, inactivo, pendiente
 
         // 🔗 Navegación
         public Usuario? Usuario { get; set; }

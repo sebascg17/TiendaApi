@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TiendaApi.Infrastructure;
 
@@ -11,9 +12,11 @@ using TiendaApi.Infrastructure;
 namespace TiendaApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20251217030951_UpdateUsuarioFields")]
+    partial class UpdateUsuarioFields
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -248,28 +251,6 @@ namespace TiendaApi.Migrations
                     b.ToTable("PedidoDetalles");
                 });
 
-            modelBuilder.Entity("TiendaApi.Models.Permiso", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<string>("Descripcion")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("Permisos");
-                });
-
             modelBuilder.Entity("TiendaApi.Models.Plan", b =>
                 {
                     b.Property<int>("Id")
@@ -429,24 +410,6 @@ namespace TiendaApi.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Roles");
-                });
-
-            modelBuilder.Entity("TiendaApi.Models.RolPermiso", b =>
-                {
-                    b.Property<int>("RolId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("PermisoId")
-                        .HasColumnType("int");
-
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.HasKey("RolId", "PermisoId");
-
-                    b.HasIndex("PermisoId");
-
-                    b.ToTable("RolPermisos");
                 });
 
             modelBuilder.Entity("TiendaApi.Models.Tienda", b =>
@@ -796,25 +759,6 @@ namespace TiendaApi.Migrations
                     b.Navigation("UsuarioReferido");
                 });
 
-            modelBuilder.Entity("TiendaApi.Models.RolPermiso", b =>
-                {
-                    b.HasOne("TiendaApi.Models.Permiso", "Permiso")
-                        .WithMany("RolPermisos")
-                        .HasForeignKey("PermisoId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.HasOne("TiendaApi.Models.Rol", "Rol")
-                        .WithMany()
-                        .HasForeignKey("RolId")
-                        .OnDelete(DeleteBehavior.Cascade)
-                        .IsRequired();
-
-                    b.Navigation("Permiso");
-
-                    b.Navigation("Rol");
-                });
-
             modelBuilder.Entity("TiendaApi.Models.Tienda", b =>
                 {
                     b.HasOne("TiendaApi.Models.Plan", "Plan")
@@ -883,11 +827,6 @@ namespace TiendaApi.Migrations
             modelBuilder.Entity("TiendaApi.Models.Pedido", b =>
                 {
                     b.Navigation("Detalles");
-                });
-
-            modelBuilder.Entity("TiendaApi.Models.Permiso", b =>
-                {
-                    b.Navigation("RolPermisos");
                 });
 
             modelBuilder.Entity("TiendaApi.Models.Plan", b =>
