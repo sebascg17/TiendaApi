@@ -52,6 +52,7 @@ namespace TiendaApi.Controllers
                 var usuario = new Usuario
                 {
                     Nombre = dto.Nombre,
+                    Apellido = dto.Apellido,
                     Email = dto.Email,
                     PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
                     VerificationToken = Guid.NewGuid().ToString(),
