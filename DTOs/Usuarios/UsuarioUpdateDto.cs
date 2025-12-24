@@ -25,6 +25,12 @@ namespace TiendaApi.DTOs.Usuarios
         [JsonPropertyName("pais")]
         public string? Pais { get; set; }
 
+        [JsonPropertyName("departamento")]
+        public string? Departamento { get; set; }
+
+        [JsonPropertyName("barrio")]
+        public string? Barrio { get; set; }
+
         [JsonPropertyName("fechaNacimiento")]
         public DateTime? FechaNacimiento { get; set; }
 

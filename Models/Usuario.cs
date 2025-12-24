@@ -31,6 +31,12 @@ namespace TiendaApi.Models
 
         [MaxLength(100)]
         public string? Pais { get; set; }
+        
+        [MaxLength(100)]
+        public string? Departamento { get; set; }
+        
+        [MaxLength(100)]
+        public string? Barrio { get; set; }
 
         public DateTime? FechaNacimiento { get; set; }
 

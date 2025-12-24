@@ -407,6 +407,41 @@ namespace TiendaApi.Controllers
             return Ok(claims);
         }
 
+        // Helper method to get the authenticated user
+        private async Task<Usuario?> GetUsuarioAutenticado()
+        {
+            Usuario? usuario = null;
+            var idClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
+            
+            if (idClaim != null && int.TryParse(idClaim.Value, out var userId))
+            {
+                usuario = await _context.Usuarios
+                    .Include(u => u.UsuarioRoles)
+                        .ThenInclude(ur => ur.Rol)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+            }
+            
+            if (usuario == null)
+            {
+                var emailClaim = User.Claims.FirstOrDefault(c => 
+                    c.Type == ClaimTypes.NameIdentifier || 
+                    c.Type == "sub" || 
+                    c.Type == "email" || 
+                    c.Type == ClaimTypes.Email || 
+                    c.Type == JwtRegisteredClaimNames.Sub ||
+                    c.Type == JwtRegisteredClaimNames.Email);
+                
+                if (emailClaim != null)
+                {
+                    usuario = await _context.Usuarios
+                        .Include(u => u.UsuarioRoles)
+                            .ThenInclude(ur => ur.Rol)
+                        .FirstOrDefaultAsync(u => u.Email == emailClaim.Value);
+                }
+            }
+            return usuario;
+        }
+
         // ✅ ENDPOINT: Obtener perfil del usuario autenticado
         [HttpGet("me")]
         [Authorize]
@@ -423,54 +458,8 @@ namespace TiendaApi.Controllers
             }
             catch { }
 
-            Usuario? usuario = null;
-
-            // Intentar obtener id desde claims
-            // Nota: ASP.NET Core mapea 'sub' a ClaimTypes.NameIdentifier automáticamente
-            var idClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
-            
-            if (idClaim != null && int.TryParse(idClaim.Value, out var userId))
-            {
-                // Caso 1: Token tiene claim 'id' válido
-                Console.WriteLine($"[DEBUG] Encontrado claim 'id' con valor: {userId}");
-                usuario = await _context.Usuarios
-                    .Include(u => u.UsuarioRoles)
-                        .ThenInclude(ur => ur.Rol)
-                    .FirstOrDefaultAsync(u => u.Id == userId);
-            }
-            
-            // Caso 2: Fallback - buscar por email si no se encontró por ID
-            if (usuario == null)
-            {
-                // ASP.NET Core mapea 'sub' a ClaimTypes.NameIdentifier
-                // Buscar en orden de prioridad
-                var emailClaim = User.Claims.FirstOrDefault(c => 
-                    c.Type == ClaimTypes.NameIdentifier ||  // 'sub' mapeado
-                    c.Type == "sub" ||                      // 'sub' sin mapear
-                    c.Type == "email" ||                    // claim 'email' directo
-                    c.Type == ClaimTypes.Email ||           // email mapeado
-                    c.Type == JwtRegisteredClaimNames.Sub ||
-                    c.Type == JwtRegisteredClaimNames.Email);
-                
-                if (emailClaim == null)
-                {
-                    Console.WriteLine("[ERROR] No se encontró claim de email. Claims disponibles:");
-                    foreach (var c in User.Claims)
-                    {
-                        Console.WriteLine($"[ERROR] Claim disponible: Type={c.Type}, Value={c.Value}");
-                    }
-                    return Unauthorized("No se pudo identificar al usuario. Token inválido.");
-                }
-
-                Console.WriteLine($"[DEBUG] Buscando usuario por email: {emailClaim.Value}");
-                usuario = await _context.Usuarios
-                    .Include(u => u.UsuarioRoles)
-                        .ThenInclude(ur => ur.Rol)
-                    .FirstOrDefaultAsync(u => u.Email == emailClaim.Value);
-            }
-
-            if (usuario == null)
-                return NotFound("Usuario no encontrado.");
+            var usuario = await GetUsuarioAutenticado();
+            if (usuario == null) return Unauthorized("No se pudo identificar al usuario.");
 
             var dto = new UsuarioReadDto
             {
@@ -481,7 +470,13 @@ namespace TiendaApi.Controllers
                 PhotoUrl = usuario.FotoPerfilUrl,
                 Roles = usuario.UsuarioRoles?.Select(ur => ur.Rol.Nombre).ToList() ?? new List<string>(),
                 FechaCreacion = usuario.FechaCreacion,
-                FechaNacimiento = usuario.FechaNacimiento
+                FechaNacimiento = usuario.FechaNacimiento,
+                Telefono = usuario.Telefono,
+                Direccion = usuario.Direccion,
+                Ciudad = usuario.Ciudad,
+                Departamento = usuario.Departamento,
+                Pais = usuario.Pais,
+                Barrio = usuario.Barrio
             };
 
             return Ok(dto);
@@ -574,6 +569,12 @@ namespace TiendaApi.Controllers
             if (!string.IsNullOrWhiteSpace(dto.Pais))
                 usuario.Pais = dto.Pais;
 
+            if (!string.IsNullOrWhiteSpace(dto.Departamento))
+                usuario.Departamento = dto.Departamento;
+
+            if (!string.IsNullOrWhiteSpace(dto.Barrio))
+                usuario.Barrio = dto.Barrio;
+
             if (dto.FechaNacimiento.HasValue)
                 usuario.FechaNacimiento = dto.FechaNacimiento;
 
@@ -596,10 +597,44 @@ namespace TiendaApi.Controllers
                 PhotoUrl = usuario.FotoPerfilUrl,
                 Roles = usuario.UsuarioRoles?.Select(ur => ur.Rol.Nombre).ToList() ?? new List<string>(),
                 FechaCreacion = usuario.FechaCreacion,
-                FechaNacimiento = usuario.FechaNacimiento
+                FechaNacimiento = usuario.FechaNacimiento,
+                Telefono = usuario.Telefono,
+                Direccion = usuario.Direccion,
+                Ciudad = usuario.Ciudad,
+                Departamento = usuario.Departamento,
+                Pais = usuario.Pais,
+                Barrio = usuario.Barrio
             };
 
             return Ok(updatedDto);
+        }
+
+        [HttpPost("me/photo")]
+        [Authorize]
+        public async Task<IActionResult> UpdatePhoto(IFormFile foto)
+        {
+            var usuario = await GetUsuarioAutenticado();
+            if (usuario == null) return Unauthorized();
+
+            if (foto == null || foto.Length == 0)
+                return BadRequest("No se proporcionó ninguna imagen.");
+
+            var folderPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot", "uploads", "profiles");
+            if (!Directory.Exists(folderPath))
+                Directory.CreateDirectory(folderPath);
+
+            var fileName = $"{usuario.Id}_{Guid.NewGuid()}{Path.GetExtension(foto.FileName)}";
+            var filePath = Path.Combine(folderPath, fileName);
+
+            using (var stream = new FileStream(filePath, FileMode.Create))
+            {
+                await foto.CopyToAsync(stream);
+            }
+
+            usuario.FotoPerfilUrl = $"/uploads/profiles/{fileName}";
+            await _context.SaveChangesAsync();
+
+            return Ok(new { url = usuario.FotoPerfilUrl });
         }
         
 
