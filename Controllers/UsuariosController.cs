@@ -280,6 +280,10 @@ namespace TiendaApi.Controllers
                 new Claim("id", usuario.Id.ToString())
             };
 
+            // Añadir nombre y apellido como claims para que el frontend los pueda leer del token
+            claims.Add(new Claim("nombre", usuario.Nombre ?? string.Empty));
+            claims.Add(new Claim("apellido", usuario.Apellido ?? string.Empty));
+
             foreach (var rol in roles)
                 claims.Add(new Claim(ClaimTypes.Role, rol));
 
@@ -299,7 +303,9 @@ namespace TiendaApi.Controllers
             {
                 token = new JwtSecurityTokenHandler().WriteToken(token),
                 expiration = token.ValidTo,
-                roles
+                roles = roles,
+                nombre = usuario.Nombre,
+                apellido = usuario.Apellido
             });
         }
 
@@ -314,8 +320,11 @@ namespace TiendaApi.Controllers
                 {
                     Id = u.Id,
                     Nombre = u.Nombre,
+                    Apellido = u.Apellido,
                     Email = u.Email,
-                    Roles = u.UsuarioRoles.Select(ur => ur.Rol.Nombre).ToList()
+                    PhotoUrl = u.FotoPerfilUrl,
+                    Roles = u.UsuarioRoles.Select(ur => ur.Rol.Nombre).ToList(),
+                    FechaNacimiento = u.FechaNacimiento
                 })
                 .ToListAsync();
 
@@ -396,6 +405,201 @@ namespace TiendaApi.Controllers
             });
 
             return Ok(claims);
+        }
+
+        // ✅ ENDPOINT: Obtener perfil del usuario autenticado
+        [HttpGet("me")]
+        [Authorize]
+        public async Task<IActionResult> Me()
+        {
+            // DEBUG: imprimir todos los claims recibidos
+            try
+            {
+                Console.WriteLine("[DEBUG] Claims recibidos en /me:");
+                foreach (var c in User.Claims)
+                {
+                    Console.WriteLine($"[DEBUG] Claim: Type={c.Type}, Value={c.Value}");
+                }
+            }
+            catch { }
+
+            Usuario? usuario = null;
+
+            // Intentar obtener id desde claims
+            // Nota: ASP.NET Core mapea 'sub' a ClaimTypes.NameIdentifier automáticamente
+            var idClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
+            
+            if (idClaim != null && int.TryParse(idClaim.Value, out var userId))
+            {
+                // Caso 1: Token tiene claim 'id' válido
+                Console.WriteLine($"[DEBUG] Encontrado claim 'id' con valor: {userId}");
+                usuario = await _context.Usuarios
+                    .Include(u => u.UsuarioRoles)
+                        .ThenInclude(ur => ur.Rol)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+            }
+            
+            // Caso 2: Fallback - buscar por email si no se encontró por ID
+            if (usuario == null)
+            {
+                // ASP.NET Core mapea 'sub' a ClaimTypes.NameIdentifier
+                // Buscar en orden de prioridad
+                var emailClaim = User.Claims.FirstOrDefault(c => 
+                    c.Type == ClaimTypes.NameIdentifier ||  // 'sub' mapeado
+                    c.Type == "sub" ||                      // 'sub' sin mapear
+                    c.Type == "email" ||                    // claim 'email' directo
+                    c.Type == ClaimTypes.Email ||           // email mapeado
+                    c.Type == JwtRegisteredClaimNames.Sub ||
+                    c.Type == JwtRegisteredClaimNames.Email);
+                
+                if (emailClaim == null)
+                {
+                    Console.WriteLine("[ERROR] No se encontró claim de email. Claims disponibles:");
+                    foreach (var c in User.Claims)
+                    {
+                        Console.WriteLine($"[ERROR] Claim disponible: Type={c.Type}, Value={c.Value}");
+                    }
+                    return Unauthorized("No se pudo identificar al usuario. Token inválido.");
+                }
+
+                Console.WriteLine($"[DEBUG] Buscando usuario por email: {emailClaim.Value}");
+                usuario = await _context.Usuarios
+                    .Include(u => u.UsuarioRoles)
+                        .ThenInclude(ur => ur.Rol)
+                    .FirstOrDefaultAsync(u => u.Email == emailClaim.Value);
+            }
+
+            if (usuario == null)
+                return NotFound("Usuario no encontrado.");
+
+            var dto = new UsuarioReadDto
+            {
+                Id = usuario.Id,
+                Nombre = usuario.Nombre,
+                Apellido = usuario.Apellido,
+                Email = usuario.Email,
+                PhotoUrl = usuario.FotoPerfilUrl,
+                Roles = usuario.UsuarioRoles?.Select(ur => ur.Rol.Nombre).ToList() ?? new List<string>(),
+                FechaCreacion = usuario.FechaCreacion,
+                FechaNacimiento = usuario.FechaNacimiento
+            };
+
+            return Ok(dto);
+        }
+
+        // ✅ ENDPOINT: Actualizar perfil del usuario autenticado
+        [HttpPut("me")]
+        [Authorize]
+        public async Task<IActionResult> UpdateMyProfile([FromBody] UsuarioUpdateDto dto)
+        {
+            // DEBUG: imprimir todos los claims recibidos
+            try
+            {
+                Console.WriteLine("[DEBUG] Claims recibidos en PUT /me:");
+                foreach (var c in User.Claims)
+                {
+                    Console.WriteLine($"[DEBUG] Claim: Type={c.Type}, Value={c.Value}");
+                }
+            }
+            catch { }
+
+            Usuario? usuario = null;
+
+            // Intentar obtener id desde claims
+            // Nota: ASP.NET Core mapea 'sub' a ClaimTypes.NameIdentifier automáticamente
+            var idClaim = User.Claims.FirstOrDefault(c => c.Type == "id");
+            
+            if (idClaim != null && int.TryParse(idClaim.Value, out var userId))
+            {
+                // Caso 1: Token tiene claim 'id' válido
+                Console.WriteLine($"[DEBUG] Encontrado claim 'id' con valor: {userId}");
+                usuario = await _context.Usuarios
+                    .Include(u => u.UsuarioRoles)
+                        .ThenInclude(ur => ur.Rol)
+                    .FirstOrDefaultAsync(u => u.Id == userId);
+            }
+            
+            // Caso 2: Fallback - buscar por email si no se encontró por ID
+            if (usuario == null)
+            {
+                // ASP.NET Core mapea 'sub' a ClaimTypes.NameIdentifier
+                // Buscar en orden de prioridad
+                var emailClaim = User.Claims.FirstOrDefault(c => 
+                    c.Type == ClaimTypes.NameIdentifier ||  // 'sub' mapeado
+                    c.Type == "sub" ||                      // 'sub' sin mapear
+                    c.Type == "email" ||                    // claim 'email' directo
+                    c.Type == ClaimTypes.Email ||           // email mapeado
+                    c.Type == JwtRegisteredClaimNames.Sub ||
+                    c.Type == JwtRegisteredClaimNames.Email);
+                
+                if (emailClaim == null)
+                {
+                    Console.WriteLine("[ERROR] No se encontró claim de email. Claims disponibles:");
+                    foreach (var c in User.Claims)
+                    {
+                        Console.WriteLine($"[ERROR] Claim disponible: Type={c.Type}, Value={c.Value}");
+                    }
+                    return Unauthorized("No se pudo identificar al usuario. Token inválido.");
+                }
+
+                Console.WriteLine($"[DEBUG] Buscando usuario por email: {emailClaim.Value}");
+                usuario = await _context.Usuarios
+                    .Include(u => u.UsuarioRoles)
+                        .ThenInclude(ur => ur.Rol)
+                    .FirstOrDefaultAsync(u => u.Email == emailClaim.Value);
+            }
+
+            if (usuario == null)
+                return NotFound("Usuario no encontrado.");
+
+            // Actualizar campos proporcionados
+            if (!string.IsNullOrWhiteSpace(dto.Nombre))
+                usuario.Nombre = dto.Nombre;
+
+            if (!string.IsNullOrWhiteSpace(dto.Apellido))
+                usuario.Apellido = dto.Apellido;
+
+            if (!string.IsNullOrWhiteSpace(dto.Email))
+                usuario.Email = dto.Email;
+
+            if (!string.IsNullOrWhiteSpace(dto.Telefono))
+                usuario.Telefono = dto.Telefono;
+
+            if (!string.IsNullOrWhiteSpace(dto.Direccion))
+                usuario.Direccion = dto.Direccion;
+
+            if (!string.IsNullOrWhiteSpace(dto.Ciudad))
+                usuario.Ciudad = dto.Ciudad;
+
+            if (!string.IsNullOrWhiteSpace(dto.Pais))
+                usuario.Pais = dto.Pais;
+
+            if (dto.FechaNacimiento.HasValue)
+                usuario.FechaNacimiento = dto.FechaNacimiento;
+
+            if (!string.IsNullOrWhiteSpace(dto.FotoPerfilUrl))
+                usuario.FotoPerfilUrl = dto.FotoPerfilUrl;
+
+            // Actualizar contraseña si se proporciona
+            if (!string.IsNullOrWhiteSpace(dto.Password))
+                usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+
+            await _context.SaveChangesAsync();
+
+            // Devolver el usuario actualizado
+            var updatedDto = new UsuarioReadDto
+            {
+                Id = usuario.Id,
+                Nombre = usuario.Nombre,
+                Apellido = usuario.Apellido,
+                Email = usuario.Email,
+                PhotoUrl = usuario.FotoPerfilUrl,
+                Roles = usuario.UsuarioRoles?.Select(ur => ur.Rol.Nombre).ToList() ?? new List<string>(),
+                FechaCreacion = usuario.FechaCreacion,
+                FechaNacimiento = usuario.FechaNacimiento
+            };
+
+            return Ok(updatedDto);
         }
         
 
@@ -483,6 +687,9 @@ namespace TiendaApi.Controllers
                     new Claim(JwtRegisteredClaimNames.Sub, usuario.Email),
                     new Claim("id", usuario.Id.ToString())
                 };
+                // Añadir nombre y apellido como claims
+                claims.Add(new Claim("nombre", usuario.Nombre ?? string.Empty));
+                claims.Add(new Claim("apellido", usuario.Apellido ?? string.Empty));
                 foreach (var rol in roles) claims.Add(new Claim(ClaimTypes.Role, rol));
 
                 var key = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(_config["Jwt:Key"]!)); // ! para null check
@@ -502,6 +709,7 @@ namespace TiendaApi.Controllers
                     expiration = token.ValidTo,
                     roles,
                     nombre = usuario.Nombre,
+                    apellido = usuario.Apellido,
                     email = usuario.Email,
                     photoUrl = picture,
                     isNewUser = isNewUser,

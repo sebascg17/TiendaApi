@@ -47,6 +47,9 @@ namespace TiendaApi.Models
 
         public DateTime FechaCreacion { get; set; } = DateTime.UtcNow;
 
+        [MaxLength(300)]
+        public string? FotoPerfilUrl { get; set; }
+
         // 🔗 Relaciones
         public ICollection<UsuarioRol>? UsuarioRoles { get; set; }
         public ICollection<Tienda>? Tiendas { get; set; }

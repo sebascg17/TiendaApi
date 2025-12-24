@@ -32,13 +32,28 @@ namespace TiendaApi.Controllers
         /// Escalable: fácil cambiar a Azure Storage en el futuro
         /// </summary>
         [HttpPost("profile-photo")]
-        public async Task<IActionResult> UploadProfilePhoto(IFormFile file, string userId, string uploadType = "profile")
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadProfilePhoto(IFormFile file, [FromForm] string? userId = null, [FromForm] string uploadType = "profile")
         {
             try
             {
+                _logger.LogDebug($"Upload request ContentType: {Request.ContentType}");
+                _logger.LogDebug($"Form keys: {string.Join(',', Request.Form.Keys)}");
+                // Si el binder no enlazó el archivo, intentar leer de Request.Form.Files
+                if ((file == null || file.Length == 0) && Request.Form?.Files?.Count > 0)
+                {
+                    file = Request.Form.Files[0];
+                }
+
                 // Validaciones
                 if (file == null || file.Length == 0)
                     return BadRequest(new { success = false, message = "No file provided" });
+
+                // Si userId viene vacío, intentar leer desde el form
+                if (string.IsNullOrEmpty(userId) && Request.Form != null && Request.Form.ContainsKey("userId"))
+                {
+                    userId = Request.Form["userId"].FirstOrDefault() ?? userId;
+                }
 
                 if (file.Length > MAX_FILE_SIZE)
                     return BadRequest(new { success = false, message = "File size exceeds 5MB limit" });
@@ -86,10 +101,13 @@ namespace TiendaApi.Controllers
         /// Escalable para futuros tipos de uploads
         /// </summary>
         [HttpPost("file")]
-        public async Task<IActionResult> UploadFile(IFormFile file, string uploadType, [FromForm] string userId = "")
+        [Consumes("multipart/form-data")]
+        public async Task<IActionResult> UploadFile(IFormFile file, [FromForm] string uploadType, [FromForm] string? userId = null)
         {
             try
             {
+                _logger.LogDebug($"UploadFile request ContentType: {Request.ContentType}");
+                _logger.LogDebug($"Form keys: {string.Join(',', Request.Form.Keys)}");
                 if (file == null || file.Length == 0)
                     return BadRequest(new { success = false, message = "No file provided" });
 

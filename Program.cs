@@ -6,6 +6,7 @@ using TiendaApi.Infrastructure; // donde tengas AppDbContext
 using TiendaApi.Services;
 using Google.Apis.Auth.OAuth2;
 using FirebaseAdmin;
+using FirebaseAdmin.Auth;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -61,7 +62,8 @@ builder.Services.AddAuthentication("Bearer")
             ValidAudience = builder.Configuration["Jwt:Audience"],
             IssuerSigningKey = new SymmetricSecurityKey(
                 Encoding.UTF8.GetBytes(builder.Configuration["Jwt:Key"])
-            )
+            ),
+            NameClaimType = "id" // Usar el claim "id" para User.Identity.Name
         };
     });
 
@@ -123,6 +125,9 @@ app.UseSwaggerUI(c =>
 });
 
 app.UseCors(MyCorsPolicy);
+
+// 🔹 Servir archivos estáticos desde wwwroot (incluyendo uploads)
+app.UseStaticFiles();
 
 app.UseAuthentication(); // ⚡ Importante: antes de UseAuthorization
 app.UseAuthorization();
