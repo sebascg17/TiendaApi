@@ -54,11 +54,13 @@ namespace TiendaApi.Controllers
                     Nombre = dto.Nombre,
                     Apellido = dto.Apellido,
                     Email = dto.Email,
-                    PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password),
+                    PasswordHash = !string.IsNullOrEmpty(dto.Password) ? BCrypt.Net.BCrypt.HashPassword(dto.Password) : null,
                     VerificationToken = Guid.NewGuid().ToString(),
                     IsVerified = false,
                     Ciudad = dto.Ciudad,
+                    Departamento = dto.Departamento,
                     Pais = dto.Pais,
+                    Barrio = dto.Barrio,
                     Direccion = dto.Direccion,
                     Telefono = dto.Telefono,
                     FechaNacimiento = dto.FechaNacimiento
@@ -128,7 +130,9 @@ namespace TiendaApi.Controllers
                     VerificationToken = Guid.NewGuid().ToString(),
                     IsVerified = false, // Requiere verificación
                     Ciudad = dto.Ciudad,
+                    Departamento = dto.Departamento,
                     Pais = dto.Pais,
+                    Barrio = dto.Barrio,
                     Direccion = dto.Direccion,
                     Telefono = dto.Telefono,
                     FechaNacimiento = dto.FechaNacimiento
@@ -185,7 +189,9 @@ namespace TiendaApi.Controllers
                 VerificationToken = Guid.NewGuid().ToString(),
                 IsVerified = false,
                 Ciudad = dto.Ciudad,
+                Departamento = dto.Departamento,
                 Pais = dto.Pais,
+                Barrio = dto.Barrio,
                 Direccion = dto.Direccion,
                 Telefono = dto.Telefono,
                 FechaNacimiento = dto.FechaNacimiento
@@ -305,7 +311,8 @@ namespace TiendaApi.Controllers
                 expiration = token.ValidTo,
                 roles = roles,
                 nombre = usuario.Nombre,
-                apellido = usuario.Apellido
+                apellido = usuario.Apellido,
+                hasPassword = !string.IsNullOrEmpty(usuario.PasswordHash)
             });
         }
 
@@ -476,7 +483,8 @@ namespace TiendaApi.Controllers
                 Ciudad = usuario.Ciudad,
                 Departamento = usuario.Departamento,
                 Pais = usuario.Pais,
-                Barrio = usuario.Barrio
+                Barrio = usuario.Barrio,
+                HasPassword = !string.IsNullOrEmpty(usuario.PasswordHash)
             };
 
             return Ok(dto);
@@ -583,7 +591,20 @@ namespace TiendaApi.Controllers
 
             // Actualizar contraseña si se proporciona
             if (!string.IsNullOrWhiteSpace(dto.Password))
+            {
+                // Si el usuario YA tiene contraseña, debemos verificar la 'Actual'
+                if (!string.IsNullOrEmpty(usuario.PasswordHash))
+                {
+                    if (string.IsNullOrWhiteSpace(dto.CurrentPassword) || 
+                        !BCrypt.Net.BCrypt.Verify(dto.CurrentPassword, usuario.PasswordHash))
+                    {
+                        return BadRequest("La contraseña actual es incorrecta o no fue proporcionada.");
+                    }
+                }
+                
+                // Si llegó aquí (o no tenía o la verificación pasó), actualizamos
                 usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
+            }
 
             await _context.SaveChangesAsync();
 
@@ -603,7 +624,8 @@ namespace TiendaApi.Controllers
                 Ciudad = usuario.Ciudad,
                 Departamento = usuario.Departamento,
                 Pais = usuario.Pais,
-                Barrio = usuario.Barrio
+                Barrio = usuario.Barrio,
+                HasPassword = !string.IsNullOrEmpty(usuario.PasswordHash)
             };
 
             return Ok(updatedDto);
@@ -639,7 +661,6 @@ namespace TiendaApi.Controllers
         
 
         // ✅ LOGIN CON REDES SOCIALES (Google, Facebook, Twitter, etc.)
-        // ✅ LOGIN CON REDES SOCIALES (Google, Facebook, Twitter, etc.)
         [HttpPost("google-login")]
         public async Task<IActionResult> FirebaseLogin([FromBody] FirebaseTokenDto dto)
         {
@@ -653,8 +674,12 @@ namespace TiendaApi.Controllers
 
                 // 2. Obtener claims de forma segura
                 string email = decodedToken.Claims.GetValueOrDefault("email")?.ToString() ?? "";
-                string nombre = decodedToken.Claims.GetValueOrDefault("name")?.ToString() ?? "Usuario Google";
+                string googleName = decodedToken.Claims.GetValueOrDefault("name")?.ToString() ?? "Usuario Google";
                 string picture = decodedToken.Claims.GetValueOrDefault("picture")?.ToString() ?? "";
+                
+                // Claims específicos para nombre y apellido (más precisos)
+                string firstName = decodedToken.Claims.GetValueOrDefault("given_name")?.ToString() ?? "";
+                string lastName = decodedToken.Claims.GetValueOrDefault("family_name")?.ToString() ?? "";
 
                 if (string.IsNullOrEmpty(email))
                     return BadRequest("El token de Google no contiene un correo electrónico válido.");
@@ -670,13 +695,25 @@ namespace TiendaApi.Controllers
                 if (usuario == null)
                 {
                     isNewUser = true;
+
+                    // Fallback si los claims específicos faltan
+                    if (string.IsNullOrEmpty(firstName))
+                    {
+                        // Split name into First and Last if possible
+                        string[] nameParts = googleName.Split(' ', 2);
+                        firstName = nameParts[0];
+                        lastName = lastName == "" && nameParts.Length > 1 ? nameParts[1] : lastName;
+                    }
+
                     usuario = new Usuario
                     {
-                        Nombre = nombre,
+                        Nombre = firstName,
+                        Apellido = lastName,
                         Email = email,
                         PasswordHash = null,
                         IsVerified = true, // Google ya verificó el email
-                        VerificationToken = null
+                        VerificationToken = null,
+                        FotoPerfilUrl = picture
                     };
 
                     using var transaction = await _context.Database.BeginTransactionAsync();
@@ -703,16 +740,8 @@ namespace TiendaApi.Controllers
                     }
                 }
 
-                // 🚨 TEMPORAL: Forzar rol Admin para usuarios de Google (Solicitud Usuario)
-                var adminRol = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == RolesConsts.Admin);
-                if (adminRol != null && !usuario.UsuarioRoles.Any(ur => ur.RolId == adminRol.Id))
-                {
-                    _context.UsuarioRoles.Add(new UsuarioRol { UsuarioId = usuario.Id, RolId = adminRol.Id });
-                    await _context.SaveChangesAsync();
-                    
-                    // Recargar roles para el token
-                    await _context.Entry(usuario).Collection(u => u.UsuarioRoles).Query().Include(ur => ur.Rol).LoadAsync();
-                }
+                // [REMOVED] Enforced Admin Role for Google Tests
+                // Users will keep their existing roles or default to 'Cliente' on creation.
 
                 // 4. Generar JWT propio
                 var roles = usuario.UsuarioRoles.Select(ur => ur.Rol.Nombre).ToList();
@@ -748,7 +777,8 @@ namespace TiendaApi.Controllers
                     email = usuario.Email,
                     photoUrl = picture,
                     isNewUser = isNewUser,
-                    profileIncomplete = string.IsNullOrEmpty(usuario.Ciudad) || string.IsNullOrEmpty(usuario.Pais)
+                    profileIncomplete = !usuario.FechaNacimiento.HasValue || string.IsNullOrEmpty(usuario.Telefono),
+                    hasPassword = !string.IsNullOrEmpty(usuario.PasswordHash)
                 });
             }
             catch (FirebaseAuthException ex)

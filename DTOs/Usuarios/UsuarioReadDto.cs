@@ -16,5 +16,6 @@ namespace TiendaApi.DTOs.Usuarios
         public string? Departamento { get; set; }
         public string? Pais { get; set; }
         public string? Barrio { get; set; }
+        public bool HasPassword { get; set; }
     }
 }

@@ -40,6 +40,9 @@ namespace TiendaApi.DTOs.Usuarios
         [JsonPropertyName("password")]
         public string? Password { get; set; }
 
+        [JsonPropertyName("currentPassword")]
+        public string? CurrentPassword { get; set; }
+
         [JsonPropertyName("roles")]
         public List<string>? Roles { get; set; }
     }

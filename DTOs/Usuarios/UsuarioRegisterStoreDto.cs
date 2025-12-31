@@ -12,14 +12,26 @@ namespace TiendaApi.DTOs.Usuarios
         public string Email { get; set; } = string.Empty;
 
         [Required]
-        [MinLength(6)]
         public string Password { get; set; } = string.Empty;
 
-        public string? Pais { get; set; }
-        public string? Ciudad { get; set; }
-        public string? Direccion { get; set; }
-        public string? Telefono { get; set; }
+        [Required]
+        public string Telefono { get; set; } = string.Empty;
+
         public DateTime? FechaNacimiento { get; set; }
+
+        [Required]
+        public string Direccion { get; set; } = string.Empty;
+
+        [Required]
+        public string Ciudad { get; set; } = string.Empty;
+
+        [Required]
+        public string Departamento { get; set; } = string.Empty;
+
+        public string Barrio { get; set; } = string.Empty;
+        
+        [Required]
+        public string Pais { get; set; } = string.Empty;
 
         [Required]
         public string NombreTienda { get; set; } = string.Empty;

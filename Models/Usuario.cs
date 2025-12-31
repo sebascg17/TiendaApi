@@ -11,14 +11,13 @@ namespace TiendaApi.Models
 
         [Required, MaxLength(100)]
         public string Nombre { get; set; } = string.Empty;
-        [Required, MaxLength(100)]
+        [MaxLength(100)]
         public string? Apellido { get; set; } = string.Empty;
 
         [Required, EmailAddress, MaxLength(150)]
         public string Email { get; set; } = string.Empty;
 
-        [Required]
-        public string PasswordHash { get; set; } = string.Empty;
+        public string? PasswordHash { get; set; }
 
         [Phone]
         public string? Telefono { get; set; }

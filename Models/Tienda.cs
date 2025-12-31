@@ -39,6 +39,18 @@ namespace TiendaApi.Models
         [Required, MaxLength(20)]
         public string Estado { get; set; } = "inactivo"; // activo, inactivo, pendiente
 
+        [MaxLength(100)]
+        public string? Pais { get; set; }
+
+        [MaxLength(100)]
+        public string? Departamento { get; set; }
+
+        [MaxLength(100)]
+        public string? Ciudad { get; set; }
+
+        [MaxLength(255)]
+        public string? Direccion { get; set; }
+
         // 🔗 Navegación
         public Usuario? Usuario { get; set; }
         public Plan? Plan { get; set; }

@@ -63,7 +63,7 @@ namespace TiendaApi.Controllers
 
         // ✅ POST: api/productos
         [HttpPost]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Tendero")]
         public async Task<ActionResult<Producto>> Create([FromBody] ProductoCreateDto dto)
         {
             var producto = new Producto
@@ -84,7 +84,7 @@ namespace TiendaApi.Controllers
 
         // ✅ PUT: api/productos/5
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Tendero")]
         public async Task<IActionResult> Update(int id, [FromBody] ProductoUpdateDto dto)
         {
             var producto = await _db.Productos
@@ -110,7 +110,7 @@ namespace TiendaApi.Controllers
 
         // ✅ DELETE: api/productos/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Tendero")]
         public async Task<IActionResult> Delete(int id)
         {
             var producto = await _db.Productos.FindAsync(id);
@@ -123,7 +123,7 @@ namespace TiendaApi.Controllers
 
         // ✅ PATCH: api/productos/{id}/categorias
         [HttpPatch("{id}/categorias")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Tendero")]
         public async Task<IActionResult> UpdateCategorias(int id, [FromBody] ProductoCategoriasDto dto)
         {
             var producto = await _db.Productos

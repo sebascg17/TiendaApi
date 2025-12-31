@@ -36,30 +36,92 @@ namespace TiendaApi.Controllers
             {
                 Nombre = dto.Nombre,
                 Descripcion = dto.Descripcion,
-                // Mapear dirección personal a descripción? O usar campos específicos si extendemos Tienda.
-                // Por ahora mapeamos 'Direccion' del DTO a la Descripción o creamos un campo futuro.
-                // Requisito del usuario: "Dirección del Local Físico". Tienda.cs no tiene 'Direccion', tiene 'Descripcion'.
-                // Vamos a concatenar la dirección a la descripción temporalmente o asumir que el Usuario quiere el campo.
-                // Mejor opción: Agregar 'Direccion' a la entidad Tienda más adelante. Por ahora lo guardo en Descripción.
-                // UPDATE: Usuario pidió 'Direccion del Local Físico'.
-                // Voy a agregar la nota en Descripción: "Direccion: [valor]"
-                
+                Direccion = dto.Direccion,
+                Pais = dto.Pais,
+                Departamento = dto.Departamento,
+                Ciudad = dto.Ciudad,
                 UsuarioId = usuarioId,
-                Estado = "inactivo", // Por defecto
+                Estado = "inactivo", 
                 FechaCreacion = DateTime.UtcNow,
                 ColorPrimario = dto.ColorPrimario
             };
 
-            // Concatenar dirección si existe
-            if (!string.IsNullOrEmpty(dto.Direccion))
-            {
-                nuevaTienda.Descripcion = (nuevaTienda.Descripcion ?? "") + " | Dirección: " + dto.Direccion;
-            }
-
             _context.Tiendas.Add(nuevaTienda);
             await _context.SaveChangesAsync();
 
-            return Ok(new { message = "Tienda creada exitosamente. Estado: Inactivo (Pendiente de aprobación).", tiendaId = nuevaTienda.Id });
+            return Ok(new { message = "Tienda creada exitosamente.", tiendaId = nuevaTienda.Id });
+        }
+
+        // GET: api/tiendas/{id}
+        [HttpGet("{id}")]
+        public async Task<IActionResult> GetTienda(int id)
+        {
+            var tienda = await _context.Tiendas
+                .FirstOrDefaultAsync(t => t.Id == id);
+
+            if (tienda == null) return NotFound();
+
+            // Seguridad básica: Solo el dueño o un admin puede ver detalles privados? 
+            // Para "Configuración", sí. Para vista pública no. 
+            // Por ahora permitimos si es el dueño.
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || int.Parse(userIdClaim) != tienda.UsuarioId)
+            {
+                if (!User.IsInRole("Admin"))
+                    return Forbid();
+            }
+
+            return Ok(tienda);
+        }
+
+        // PUT: api/tiendas/{id}
+        [HttpPut("{id}")]
+        [Authorize(Roles = "Tendero,Admin")]
+        public async Task<IActionResult> UpdateTienda(int id, [FromBody] TiendaUpdateDto dto)
+        {
+            var tienda = await _context.Tiendas.FindAsync(id);
+            if (tienda == null) return NotFound();
+
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || int.Parse(userIdClaim) != tienda.UsuarioId)
+            {
+                if (!User.IsInRole("Admin"))
+                    return Forbid();
+            }
+
+            tienda.Nombre = dto.Nombre;
+            tienda.Descripcion = dto.Descripcion;
+            tienda.Direccion = dto.Direccion;
+            tienda.Pais = dto.Pais;
+            tienda.Departamento = dto.Departamento;
+            tienda.Ciudad = dto.Ciudad;
+            tienda.ColorPrimario = dto.ColorPrimario;
+            
+            if (!string.IsNullOrEmpty(dto.LogoUrl))
+                tienda.LogoUrl = dto.LogoUrl;
+
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Tienda actualizada correctamente." });
+        }
+
+        // DELETE: api/tiendas/{id}
+        [HttpDelete("{id}")]
+        [Authorize(Roles = "Tendero,Admin")]
+        public async Task<IActionResult> DeleteTienda(int id)
+        {
+            var tienda = await _context.Tiendas.FindAsync(id);
+            if (tienda == null) return NotFound();
+
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim) || int.Parse(userIdClaim) != tienda.UsuarioId)
+            {
+                if (!User.IsInRole("Admin"))
+                    return Forbid();
+            }
+
+            _context.Tiendas.Remove(tienda);
+            await _context.SaveChangesAsync();
+            return Ok(new { message = "Tienda eliminada correctamente." });
         }
 
         // GET: api/tiendas/mis-tiendas (Listar tiendas del usuario logueado)

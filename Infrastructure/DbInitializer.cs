@@ -1,5 +1,6 @@
 using TiendaApi.Constants;
 using TiendaApi.Models;
+using Microsoft.EntityFrameworkCore;
 
 namespace TiendaApi.Infrastructure
 {
@@ -7,8 +8,8 @@ namespace TiendaApi.Infrastructure
     {
         public static void Initialize(AppDbContext context)
         {
-            // Asegurarse de que la BD existe
-            context.Database.EnsureCreated();
+            // Aplicar migraciones pendientes (AddDireccionUsuario, etc.)
+            context.Database.Migrate();
 
             // Verificar si ya existen roles
             if (context.Roles.Any())

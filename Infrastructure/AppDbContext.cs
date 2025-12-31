@@ -13,6 +13,7 @@ namespace TiendaApi.Infrastructure
         public DbSet<UsuarioRol> UsuarioRoles => Set<UsuarioRol>();
         public DbSet<Permiso> Permisos => Set<Permiso>();
         public DbSet<RolPermiso> RolPermisos => Set<RolPermiso>();
+        public DbSet<DireccionUsuario> DireccionesUsuarios { get; set; }
 
         // 🏪 Tiendas y Planes
         public DbSet<Tienda> Tiendas => Set<Tienda>();

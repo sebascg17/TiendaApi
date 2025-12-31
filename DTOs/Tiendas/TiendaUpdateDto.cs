@@ -2,7 +2,7 @@ using System.ComponentModel.DataAnnotations;
 
 namespace TiendaApi.DTOs.Tiendas
 {
-    public class TiendaCreateDto
+    public class TiendaUpdateDto
     {
         [Required, MaxLength(100)]
         public string Nombre { get; set; } = string.Empty;
@@ -10,15 +10,21 @@ namespace TiendaApi.DTOs.Tiendas
         [MaxLength(500)]
         public string? Descripcion { get; set; }
 
+        [MaxLength(255)]
         public string? Direccion { get; set; }
+
+        [MaxLength(100)]
         public string? Pais { get; set; }
+
+        [MaxLength(100)]
         public string? Departamento { get; set; }
+
+        [MaxLength(100)]
         public string? Ciudad { get; set; }
+
+        public string? LogoUrl { get; set; }
         
-        public string? Telefono { get; set; }
-
+        [MaxLength(20)]
         public string? ColorPrimario { get; set; }
-
-        // El usuario se obtiene del token, no del DTO
     }
 }
