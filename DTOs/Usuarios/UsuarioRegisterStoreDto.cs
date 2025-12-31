@@ -33,8 +33,7 @@ namespace TiendaApi.DTOs.Usuarios
         [Required]
         public string Pais { get; set; } = string.Empty;
 
-        [Required]
-        public string NombreTienda { get; set; } = string.Empty;
+        public string? NombreTienda { get; set; }
 
         public string? DireccionTienda { get; set; }
     }

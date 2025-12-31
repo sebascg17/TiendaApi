@@ -8,5 +8,6 @@ namespace TiendaApi.DTOs.Usuarios
     public class FirebaseTokenDto
     {
         public string? IdToken { get; set; }
+        public bool AllowRegistration { get; set; } = true;
     }
 }

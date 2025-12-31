@@ -113,10 +113,14 @@ namespace TiendaApi.Controllers
             if (await _context.Usuarios.AnyAsync(u => u.Email == dto.Email))
                 return BadRequest("El usuario ya existe");
 
-            // Validar unicidad de tienda (slug básico)
-            var slug = dto.NombreTienda.ToLower().Replace(" ", "-");
-            if (await _context.Tiendas.AnyAsync(t => t.Slug == slug))
-                 return BadRequest("El nombre de la tienda ya está en uso."); // Simplificación
+            // Validar unicidad de tienda (slug básico) si se provee nombre
+            string? slug = null;
+            if (!string.IsNullOrEmpty(dto.NombreTienda))
+            {
+                slug = dto.NombreTienda.ToLower().Replace(" ", "-");
+                if (await _context.Tiendas.AnyAsync(t => t.Slug == slug))
+                     return BadRequest("El nombre de la tienda ya está en uso.");
+            }
 
             using var transaction = await _context.Database.BeginTransactionAsync();
             try
@@ -147,18 +151,21 @@ namespace TiendaApi.Controllers
                     _context.UsuarioRoles.Add(new UsuarioRol { UsuarioId = usuario.Id, RolId = rol.Id });
                 }
 
-                // 3. Crear Tienda
-                var tienda = new Tienda
+                // 3. Crear Tienda (Solo si se proporcionó nombre)
+                if (!string.IsNullOrEmpty(dto.NombreTienda) && slug != null)
                 {
-                    UsuarioId = usuario.Id,
-                    Nombre = dto.NombreTienda,
-                    Descripcion = dto.DireccionTienda,
-                    Slug = slug,
-                    FechaCreacion = DateTime.UtcNow,
-                    Estado = "activo"
-                };
-                _context.Tiendas.Add(tienda);
-                await _context.SaveChangesAsync();
+                    var tienda = new Tienda
+                    {
+                        UsuarioId = usuario.Id,
+                        Nombre = dto.NombreTienda,
+                        Descripcion = dto.DireccionTienda,
+                        Slug = slug,
+                        FechaCreacion = DateTime.UtcNow,
+                        Estado = "activo"
+                    };
+                    _context.Tiendas.Add(tienda);
+                    await _context.SaveChangesAsync();
+                }
 
                 await transaction.CommitAsync();
 
@@ -271,7 +278,7 @@ namespace TiendaApi.Controllers
                 .FirstOrDefaultAsync(u => u.Email == dto.Email);
 
             if (usuario == null)
-                return Unauthorized("Credenciales inválidas");
+                return NotFound("Usuario no registrado");
 
             // Verificar contraseña con BCrypt
             if (string.IsNullOrEmpty(usuario.PasswordHash) || !BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
@@ -694,6 +701,9 @@ namespace TiendaApi.Controllers
 
                 if (usuario == null)
                 {
+                    if (!dto.AllowRegistration)
+                        return NotFound("Usuario no registrado");
+
                     isNewUser = true;
 
                     // Fallback si los claims específicos faltan
@@ -790,7 +800,31 @@ namespace TiendaApi.Controllers
                 // Captura cualquier otro error (DB, Configuración, etc.) para evitar el 500 genérico sin cuerpo
                 return StatusCode(500, new { message = $"Error interno al procesar login con Google: {ex.Message}" });
             }
+        }
 
+        [HttpPost("upgrade-role")]
+        [Authorize]
+        public async Task<IActionResult> UpgradeRole([FromBody] RoleUpgradeDto dto)
+        {
+            var role = dto.Role;
+            var usuario = await GetUsuarioAutenticado();
+            if (usuario == null) return NotFound("Usuario no encontrado");
+
+            // Validar que el rol sea válido
+            if (role != RolesConsts.Tendero && role != RolesConsts.Cliente)
+                return BadRequest("Rol inválido");
+
+            // Verificar si ya tiene el rol
+            var tieneRol = usuario.UsuarioRoles.Any(ur => ur.Rol.Nombre == role);
+            if (tieneRol) return BadRequest($"El usuario ya tiene el rol de {role}");
+
+            var dbRole = await _context.Roles.FirstOrDefaultAsync(r => r.Nombre == role);
+            if (dbRole == null) return BadRequest("Rol no registrado en el sistema");
+
+            _context.UsuarioRoles.Add(new UsuarioRol { UsuarioId = usuario.Id, RolId = dbRole.Id });
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"Rol {role} asignado correctamente" });
         }
     }
 }
