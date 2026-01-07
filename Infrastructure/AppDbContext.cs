@@ -18,6 +18,7 @@ namespace TiendaApi.Infrastructure
         // 🏪 Tiendas y Planes
         public DbSet<Tienda> Tiendas => Set<Tienda>();
         public DbSet<Plan> Planes => Set<Plan>();
+        public DbSet<TipoTienda> TipoTiendas => Set<TipoTienda>();
 
         // 🛒 Productos y Categorías
         public DbSet<Categoria> Categorias => Set<Categoria>();
@@ -153,7 +154,24 @@ namespace TiendaApi.Infrastructure
                 .HasForeignKey(t => t.PlanId)
                 .OnDelete(DeleteBehavior.SetNull);
 
-            // ======== PRECISIONES DECIMALES ========
+            modelBuilder.Entity<Tienda>()
+                .HasOne(t => t.TipoTienda)
+                .WithMany(tp => tp.Tiendas)
+                .HasForeignKey(t => t.TipoTiendaId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            modelBuilder.Entity<Tienda>()
+                .HasOne(t => t.Usuario)
+                .WithMany(u => u.Tiendas)
+                .HasForeignKey(t => t.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
+
+            // ======== TRANSACCIONES ========
+            modelBuilder.Entity<Transaccion>()
+                .HasOne(t => t.Usuario)
+                .WithMany(u => u.Transacciones)
+                .HasForeignKey(t => t.UsuarioId)
+                .OnDelete(DeleteBehavior.Restrict);
             modelBuilder.Entity<Usuario>()
                 .Property(u => u.Saldo)
                 .HasPrecision(18, 2);
@@ -181,33 +199,13 @@ namespace TiendaApi.Infrastructure
             modelBuilder.Entity<Comision>()
                 .Property(c => c.Monto)
                 .HasPrecision(18, 2);
-            // --- Configuración Pedido -> Usuario (Cliente) ---
-            modelBuilder.Entity<Pedido>()
-                .HasOne(p => p.Cliente)
-                .WithMany()
-                .HasForeignKey(p => p.ClienteId)
-                .OnDelete(DeleteBehavior.Restrict);
 
-            // --- Configuración Pedido -> Usuario (Repartidor) ---
-            modelBuilder.Entity<Pedido>()
-                .HasOne(p => p.Repartidor)
-                .WithMany()
-                .HasForeignKey(p => p.RepartidorId)
-                .OnDelete(DeleteBehavior.Restrict);
-
-            // --- Configuración Pedido -> Tienda ---
-            modelBuilder.Entity<Pedido>()
-                .HasOne(p => p.Tienda)
-                .WithMany()
-                .HasForeignKey(p => p.TiendaId)
-                .OnDelete(DeleteBehavior.Cascade);
             // ======== PEDIDO - TIENDA ========
             modelBuilder.Entity<Pedido>()
                 .HasOne(p => p.Tienda)
                 .WithMany(t => t.Pedidos)
                 .HasForeignKey(p => p.TiendaId)
                 .OnDelete(DeleteBehavior.Restrict);
-
         }
     }
 }

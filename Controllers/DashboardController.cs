@@ -72,5 +72,69 @@ namespace TiendaApi.Controllers
                 StatsPedidos = statsPedidos
             });
         }
+
+        // GET: api/dashboard/admin
+        [HttpGet("admin")]
+        public async Task<IActionResult> GetAdminDashboard()
+        {
+            // 1. Estadísticas Globales
+            var totalUsers = await _db.Usuarios.CountAsync();
+            var totalProducts = await _db.Productos.CountAsync();
+            var totalOrders = await _db.Pedidos.CountAsync();
+            var totalRevenue = await _db.Pedidos
+                .Where(p => p.Estado == EstadoPedido.Confirmado || p.Estado == EstadoPedido.Entregado)
+                .SumAsync(p => p.Total);
+
+            // Desglose de Usuarios por Rol
+            var userBreakdown = await _db.UsuarioRoles
+                .Include(ur => ur.Rol)
+                .GroupBy(ur => ur.Rol.Nombre)
+                .Select(g => new { Role = g.Key, Count = g.Count() })
+                .ToListAsync();
+
+            // 2. Usuarios Recientes (Sessions)
+            var recentUsers = await _db.Usuarios
+                .Include(u => u.UsuarioRoles)
+                    .ThenInclude(ur => ur.Rol)
+                .OrderByDescending(u => u.UltimaSesion ?? u.FechaRegistro)
+                .Take(5)
+                .Select(u => new
+                {
+                    u.Id,
+                    u.Nombre,
+                    u.Apellido,
+                    u.Email,
+                    u.UltimaSesion,
+                    u.FechaRegistro,
+                    Roles = u.UsuarioRoles.Select(ur => ur.Rol.Nombre).ToList()
+                })
+                .ToListAsync();
+
+            // 3. Órdenes Recientes
+            var recentOrders = await _db.Pedidos
+                .OrderByDescending(p => p.Fecha)
+                .Take(5)
+                .Select(p => new PedidoReadDto
+                {
+                    Id = p.Id,
+                    Cliente = p.ClienteNombre,
+                    Email = p.ClienteEmail,
+                    Fecha = p.Fecha,
+                    Total = p.Total,
+                    Estado = p.Estado
+                })
+                .ToListAsync();
+
+            return Ok(new
+            {
+                TotalUsers = totalUsers,
+                UserBreakdown = userBreakdown,
+                TotalProducts = totalProducts,
+                TotalOrders = totalOrders,
+                TotalRevenue = totalRevenue,
+                RecentUsers = recentUsers,
+                RecentOrders = recentOrders
+            });
+        }
     }
 }

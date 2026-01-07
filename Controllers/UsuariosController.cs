@@ -284,6 +284,10 @@ namespace TiendaApi.Controllers
             if (string.IsNullOrEmpty(usuario.PasswordHash) || !BCrypt.Net.BCrypt.Verify(dto.Password, usuario.PasswordHash))
                 return Unauthorized("Credenciales inválidas");
 
+            // Actualizar última sesión
+            usuario.UltimaSesion = DateTime.UtcNow;
+            await _context.SaveChangesAsync();
+
             var roles = usuario.UsuarioRoles.Select(ur => ur.Rol.Nombre).ToList();
 
             // 🔹 Claims del token
@@ -319,7 +323,8 @@ namespace TiendaApi.Controllers
                 roles = roles,
                 nombre = usuario.Nombre,
                 apellido = usuario.Apellido,
-                hasPassword = !string.IsNullOrEmpty(usuario.PasswordHash)
+                hasPassword = !string.IsNullOrEmpty(usuario.PasswordHash),
+                modoTema = usuario.ModoTema
             });
         }
 
@@ -612,6 +617,9 @@ namespace TiendaApi.Controllers
                 // Si llegó aquí (o no tenía o la verificación pasó), actualizamos
                 usuario.PasswordHash = BCrypt.Net.BCrypt.HashPassword(dto.Password);
             }
+
+            if (!string.IsNullOrWhiteSpace(dto.ModoTema))
+                usuario.ModoTema = dto.ModoTema;
 
             await _context.SaveChangesAsync();
 

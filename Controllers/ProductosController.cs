@@ -16,27 +16,99 @@ namespace TiendaApi.Controllers
 
         // ✅ GET: api/productos
         [HttpGet]
-        public async Task<ActionResult<IEnumerable<Producto>>> Get()
+        public async Task<ActionResult<IEnumerable<ProductoReadDto>>> Get()
         {
             var productos = await _db.Productos
                 .Include(p => p.ProductoCategorias)
                 .ThenInclude(pc => pc.Categoria)
                 .ToListAsync();
 
-            return Ok(productos);
+            var productosDto = productos.Select(p => new ProductoReadDto
+            {
+                Id = p.Id,
+                Nombre = p.Nombre,
+                Descripcion = p.Descripcion,
+                Precio = p.Precio,
+                ImagenUrl = p.ImagenUrl,
+                Activo = p.Activo,
+                Stock = p.Stock,
+                TiendaId = p.TiendaId,
+                Categorias = p.ProductoCategorias
+                    ?.Select(pc => new CategoriaSimpleDto
+                    {
+                        Id = pc.Categoria.Id,
+                        Nombre = pc.Categoria.Nombre
+                    })
+                    .ToList() ?? new()
+            }).ToList();
+
+            return Ok(productosDto);
         }
 
         // ✅ GET: api/productos/5
         [HttpGet("{id}")]
-        public async Task<ActionResult<Producto>> GetById(int id)
+        public async Task<ActionResult<ProductoReadDto>> GetById(int id)
         {
             var producto = await _db.Productos
                 .Include(p => p.ProductoCategorias)
                 .ThenInclude(pc => pc.Categoria)
                 .FirstOrDefaultAsync(p => p.Id == id);
 
-            if (producto == null) return NotFound();
-            return Ok(producto);
+            if (producto == null) return NotFound(new { message = "Producto no encontrado" });
+
+            var productoDto = new ProductoReadDto
+            {
+                Id = producto.Id,
+                Nombre = producto.Nombre,
+                Descripcion = producto.Descripcion,
+                Precio = producto.Precio,
+                ImagenUrl = producto.ImagenUrl,
+                Activo = producto.Activo,
+                Stock = producto.Stock,
+                TiendaId = producto.TiendaId,
+                Categorias = producto.ProductoCategorias
+                    ?.Select(pc => new CategoriaSimpleDto
+                    {
+                        Id = pc.Categoria.Id,
+                        Nombre = pc.Categoria.Nombre
+                    })
+                    .ToList() ?? new()
+            };
+
+            return Ok(productoDto);
+        }
+
+        // ✅ GET: api/productos/destacados
+        [HttpGet("destacados")]
+        public async Task<ActionResult<IEnumerable<ProductoReadDto>>> GetDestacados()
+        {
+            var productos = await _db.Productos
+                .Include(p => p.ProductoCategorias)
+                .ThenInclude(pc => pc.Categoria)
+                .Where(p => p.Activo)
+                .Take(8)
+                .ToListAsync();
+
+            var productosDto = productos.Select(p => new ProductoReadDto
+            {
+                Id = p.Id,
+                Nombre = p.Nombre,
+                Descripcion = p.Descripcion,
+                Precio = p.Precio,
+                ImagenUrl = p.ImagenUrl,
+                Activo = p.Activo,
+                Stock = p.Stock,
+                TiendaId = p.TiendaId,
+                Categorias = p.ProductoCategorias
+                    ?.Select(pc => new CategoriaSimpleDto
+                    {
+                        Id = pc.Categoria.Id,
+                        Nombre = pc.Categoria.Nombre
+                    })
+                    .ToList() ?? new()
+            }).ToList();
+
+            return Ok(productosDto);
         }
 
         // ✅ GET: api/productos/{id}/categorias
@@ -64,12 +136,20 @@ namespace TiendaApi.Controllers
         // ✅ POST: api/productos
         [HttpPost]
         [Authorize(Roles = "Admin,Tendero")]
-        public async Task<ActionResult<Producto>> Create([FromBody] ProductoCreateDto dto)
+        public async Task<ActionResult<ProductoReadDto>> Create([FromBody] ProductoCreateDto dto)
         {
+            // Validar que TiendaId sea válido
+            var tiendaExists = await _db.Tiendas.AnyAsync(t => t.Id == dto.TiendaId);
+            if (!tiendaExists)
+                return BadRequest(new { message = "La tienda especificada no existe" });
+
             var producto = new Producto
             {
+                TiendaId = dto.TiendaId,
                 Nombre = dto.Nombre,
+                Descripcion = dto.Descripcion,
                 Precio = dto.Precio,
+                ImagenUrl = dto.ImagenUrl,
                 ProductoCategorias = dto.CategoriasIds.Select(cid => new ProductoCategoria
                 {
                     CategoriaId = cid
@@ -79,7 +159,34 @@ namespace TiendaApi.Controllers
             _db.Productos.Add(producto);
             await _db.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetById), new { id = producto.Id }, producto);
+            // Recargar para obtener las categorías
+            await _db.Entry(producto)
+                .Collection(p => p.ProductoCategorias)
+                .LoadAsync();
+            await _db.Entry(producto)
+                .Reference(p => p.ProductoCategorias.FirstOrDefault()!.Categoria)
+                .LoadAsync();
+
+            var productoDto = new ProductoReadDto
+            {
+                Id = producto.Id,
+                Nombre = producto.Nombre,
+                Descripcion = producto.Descripcion,
+                Precio = producto.Precio,
+                ImagenUrl = producto.ImagenUrl,
+                Activo = producto.Activo,
+                Stock = producto.Stock,
+                TiendaId = producto.TiendaId,
+                Categorias = producto.ProductoCategorias
+                    ?.Select(pc => new CategoriaSimpleDto
+                    {
+                        Id = pc.Categoria.Id,
+                        Nombre = pc.Categoria.Nombre
+                    })
+                    .ToList() ?? new()
+            };
+
+            return CreatedAtAction(nameof(GetById), new { id = producto.Id }, productoDto);
         }
 
         // ✅ PUT: api/productos/5

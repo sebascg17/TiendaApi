@@ -10,7 +10,6 @@ namespace TiendaApi.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize] // Requiere estar logueado
     public class TiendasController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -20,9 +19,48 @@ namespace TiendaApi.Controllers
             _context = context;
         }
 
+        // GET: api/tiendas (Obtener todas las tiendas - Público)
+        [HttpGet]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTiendas()
+        {
+            var tiendas = await _context.Tiendas
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Nombre,
+                    t.Descripcion,
+                    t.LogoUrl,
+                    t.Estado
+                })
+                .ToListAsync();
+
+            return Ok(tiendas);
+        }
+
+        // GET: api/tiendas/usuario/{usuarioId} (Obtener tiendas de un usuario específico)
+        [HttpGet("usuario/{usuarioId}")]
+        [AllowAnonymous]
+        public async Task<IActionResult> GetTiendasByUsuario(int usuarioId)
+        {
+            var tiendas = await _context.Tiendas
+                .Where(t => t.UsuarioId == usuarioId)
+                .Select(t => new
+                {
+                    t.Id,
+                    t.Nombre,
+                    t.Descripcion,
+                    t.LogoUrl,
+                    t.Estado
+                })
+                .ToListAsync();
+
+            return Ok(tiendas);
+        }
+
         // POST: api/tiendas (Crear nueva tienda)
         [HttpPost]
-        [Authorize(Roles = "Tendero")] // Solo tenderos pueden crear tiendas
+        [Authorize(Roles = "Tendero,Admin")] // Tenderos y Admins pueden crear tiendas
         public async Task<IActionResult> CrearTienda([FromBody] TiendaCreateDto dto)
         {
             // Obtener ID del usuario del token
@@ -35,6 +73,7 @@ namespace TiendaApi.Controllers
             var nuevaTienda = new Tienda
             {
                 Nombre = dto.Nombre,
+                DocumentoIdentidad = dto.DocumentoIdentidad,
                 Descripcion = dto.Descripcion,
                 Direccion = dto.Direccion,
                 Pais = dto.Pais,
@@ -43,7 +82,21 @@ namespace TiendaApi.Controllers
                 UsuarioId = usuarioId,
                 Estado = "inactivo", 
                 FechaCreacion = DateTime.UtcNow,
-                ColorPrimario = dto.ColorPrimario
+                ColorPrimario = dto.ColorPrimario,
+                Telefono = dto.Telefono,
+                Email = dto.Email,
+                Slug = dto.Slug,
+                Latitud = dto.Latitud,
+                Longitud = dto.Longitud,
+                Bloque = dto.Bloque,
+                Apto = dto.Apto,
+                Torre = dto.Torre,
+                Referencia = dto.Referencia,
+                HoraApertura = dto.HoraApertura,
+                MinutoApertura = dto.MinutoApertura,
+                HoraCierre = dto.HoraCierre,
+                MinutoCierre = dto.MinutoCierre,
+                TipoTiendaId = dto.TipoTiendaId
             };
 
             _context.Tiendas.Add(nuevaTienda);
@@ -54,6 +107,7 @@ namespace TiendaApi.Controllers
 
         // GET: api/tiendas/{id}
         [HttpGet("{id}")]
+        [Authorize]
         public async Task<IActionResult> GetTienda(int id)
         {
             var tienda = await _context.Tiendas
@@ -90,12 +144,27 @@ namespace TiendaApi.Controllers
             }
 
             tienda.Nombre = dto.Nombre;
+            tienda.DocumentoIdentidad = dto.DocumentoIdentidad;
             tienda.Descripcion = dto.Descripcion;
             tienda.Direccion = dto.Direccion;
             tienda.Pais = dto.Pais;
             tienda.Departamento = dto.Departamento;
             tienda.Ciudad = dto.Ciudad;
             tienda.ColorPrimario = dto.ColorPrimario;
+            tienda.Telefono = dto.Telefono;
+            tienda.Email = dto.Email;
+            tienda.Slug = dto.Slug;
+            tienda.Latitud = dto.Latitud;
+            tienda.Longitud = dto.Longitud;
+            tienda.Bloque = dto.Bloque;
+            tienda.Apto = dto.Apto;
+            tienda.Torre = dto.Torre;
+            tienda.Referencia = dto.Referencia;
+            tienda.HoraApertura = dto.HoraApertura;
+            tienda.MinutoApertura = dto.MinutoApertura;
+            tienda.HoraCierre = dto.HoraCierre;
+            tienda.MinutoCierre = dto.MinutoCierre;
+            tienda.TipoTiendaId = dto.TipoTiendaId;
             
             if (!string.IsNullOrEmpty(dto.LogoUrl))
                 tienda.LogoUrl = dto.LogoUrl;

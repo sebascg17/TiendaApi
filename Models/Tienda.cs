@@ -16,11 +16,17 @@ namespace TiendaApi.Models
         [Required, MaxLength(100)]
         public string Nombre { get; set; } = string.Empty;
 
+        [MaxLength(50)]
+        public string? DocumentoIdentidad { get; set; } // NIT / Cédula
+
         [MaxLength(100)]
         public string? Subdominio { get; set; } // Ej: tienda.sbenix.com
 
         [MaxLength(100)]
         public string? Slug { get; set; } // Ej: /tiendas/nombre-tienda
+
+        public decimal? Latitud { get; set; }
+        public decimal? Longitud { get; set; }
 
         [MaxLength(500)]
         public string? Descripcion { get; set; }
@@ -50,6 +56,32 @@ namespace TiendaApi.Models
 
         [MaxLength(255)]
         public string? Direccion { get; set; }
+
+        [MaxLength(100)]
+        public string? Telefono { get; set; }
+
+        [MaxLength(100)]
+        public string? Email { get; set; }
+
+        // Detalles de Dirección Pro
+        [MaxLength(50)]
+        public string? Bloque { get; set; }
+        [MaxLength(50)]
+        public string? Apto { get; set; }
+        [MaxLength(50)]
+        public string? Torre { get; set; }
+        [MaxLength(300)]
+        public string? Referencia { get; set; }
+
+        // Horarios Desglosados
+        public int? HoraApertura { get; set; } // 0-23
+        public int? MinutoApertura { get; set; } // 0-59
+        public int? HoraCierre { get; set; }
+        public int? MinutoCierre { get; set; }
+
+        // Clasificación
+        public int? TipoTiendaId { get; set; }
+        public TipoTienda? TipoTienda { get; set; }
 
         // 🔗 Navegación
         public Usuario? Usuario { get; set; }

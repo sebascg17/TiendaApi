@@ -9,6 +9,7 @@ namespace TiendaApi.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
+    [Authorize(AuthenticationSchemes = "Bearer")]
     public class CategoriasController : ControllerBase
     {
         private readonly AppDbContext _context;
@@ -71,23 +72,19 @@ namespace TiendaApi.Controllers
 
         // ✅ POST: api/categorias
         [HttpPost]
-        [Authorize(Roles = "Admin,Tendero")]
+        [Authorize(Roles = "Admin,Tendero", AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> CreateCategoria([FromBody] CategoriaCreateDto dto)
         {
             var categoria = new Categoria
             {
                 Nombre = dto.Nombre,
+                TiendaId = dto.TiendaId,
                 Slug = dto.Nombre.ToLower().Replace(" ", "-") // Slug básico
             };
 
-            if (User.IsInRole("Tendero"))
+            // Si es tendero y no se mandó TiendaId, auto-asignar la suya
+            if (User.IsInRole("Tendero") && !User.IsInRole("Admin") && !categoria.TiendaId.HasValue)
             {
-                // Requerir que especifique su tienda o asignar la primera?
-                // El DTO no tiene TiendaId, vamos a asumir que el usuario quiere asignar su tienda.
-                // Mejor: Agregar TiendaId al DTO o inferirlo.
-                // Como un Tendero puede tener varias tiendas, debería enviarlo.
-                // Si no lo envía, buscamos la primera activa? No, mejor fallar o requerir.
-                // Por simplicidad, buscamos su primera tienda.
                 var userIdClaim = User.FindFirst("id")?.Value;
                 var tienda = await _context.Tiendas.FirstOrDefaultAsync(t => t.UsuarioId == int.Parse(userIdClaim!));
                 if (tienda == null) return BadRequest("Debe crear una tienda primero.");
@@ -97,12 +94,12 @@ namespace TiendaApi.Controllers
             _context.Categorias.Add(categoria);
             await _context.SaveChangesAsync();
 
-            return CreatedAtAction(nameof(GetCategoria), new { id = categoria.Id }, categoria);
+            return CreatedAtAction(nameof(GetCategorias), new { id = categoria.Id }, categoria);
         }
 
         // ✅ PUT: api/categorias/5
         [HttpPut("{id}")]
-        [Authorize(Roles = "Admin,Tendero")]
+        [Authorize(Roles = "Admin,Tendero", AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> UpdateCategoria(int id, [FromBody] CategoriaUpdateDto dto)
         {
             var categoria = await _context.Categorias.FindAsync(id);
@@ -125,7 +122,7 @@ namespace TiendaApi.Controllers
 
         // ✅ DELETE: api/categorias/5
         [HttpDelete("{id}")]
-        [Authorize(Roles = "Admin,Tendero")]
+        [Authorize(Roles = "Admin,Tendero", AuthenticationSchemes = "Bearer")]
         public async Task<IActionResult> DeleteCategoria(int id)
         {
             var categoria = await _context.Categorias.FindAsync(id);

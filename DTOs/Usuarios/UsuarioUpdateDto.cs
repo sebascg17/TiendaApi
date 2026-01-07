@@ -42,6 +42,7 @@ namespace TiendaApi.DTOs.Usuarios
 
         [JsonPropertyName("currentPassword")]
         public string? CurrentPassword { get; set; }
+        public string? ModoTema { get; set; }
 
         [JsonPropertyName("roles")]
         public List<string>? Roles { get; set; }

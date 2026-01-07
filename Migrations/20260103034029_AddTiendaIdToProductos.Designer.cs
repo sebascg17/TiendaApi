@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TiendaApi.Infrastructure;
 
@@ -11,9 +12,11 @@ using TiendaApi.Infrastructure;
 namespace TiendaApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260103034029_AddTiendaIdToProductos")]
+    partial class AddTiendaIdToProductos
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -253,6 +256,9 @@ namespace TiendaApi.Migrations
                         .HasPrecision(18, 2)
                         .HasColumnType("decimal(18,2)");
 
+                    b.Property<int?>("UsuarioId")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("ClienteId");
@@ -260,6 +266,8 @@ namespace TiendaApi.Migrations
                     b.HasIndex("RepartidorId");
 
                     b.HasIndex("TiendaId");
+
+                    b.HasIndex("UsuarioId");
 
                     b.ToTable("Pedidos");
                 });
@@ -509,14 +517,6 @@ namespace TiendaApi.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<string>("Apto")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Bloque")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<string>("Ciudad")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -537,14 +537,6 @@ namespace TiendaApi.Migrations
                         .HasMaxLength(255)
                         .HasColumnType("nvarchar(255)");
 
-                    b.Property<string>("DocumentoIdentidad")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
-                    b.Property<string>("Email")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
                     b.Property<string>("Estado")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -553,26 +545,8 @@ namespace TiendaApi.Migrations
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
 
-                    b.Property<int?>("HoraApertura")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("HoraCierre")
-                        .HasColumnType("int");
-
-                    b.Property<decimal?>("Latitud")
-                        .HasColumnType("decimal(18,2)");
-
                     b.Property<string>("LogoUrl")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<decimal?>("Longitud")
-                        .HasColumnType("decimal(18,2)");
-
-                    b.Property<int?>("MinutoApertura")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("MinutoCierre")
-                        .HasColumnType("int");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -586,10 +560,6 @@ namespace TiendaApi.Migrations
                     b.Property<int?>("PlanId")
                         .HasColumnType("int");
 
-                    b.Property<string>("Referencia")
-                        .HasMaxLength(300)
-                        .HasColumnType("nvarchar(300)");
-
                     b.Property<string>("Slug")
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
@@ -598,17 +568,6 @@ namespace TiendaApi.Migrations
                         .HasMaxLength(100)
                         .HasColumnType("nvarchar(100)");
 
-                    b.Property<string>("Telefono")
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.Property<int?>("TipoTiendaId")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Torre")
-                        .HasMaxLength(50)
-                        .HasColumnType("nvarchar(50)");
-
                     b.Property<int>("UsuarioId")
                         .HasColumnType("int");
 
@@ -616,39 +575,9 @@ namespace TiendaApi.Migrations
 
                     b.HasIndex("PlanId");
 
-                    b.HasIndex("TipoTiendaId");
-
                     b.HasIndex("UsuarioId");
 
                     b.ToTable("Tiendas");
-                });
-
-            modelBuilder.Entity("TiendaApi.Models.TipoTienda", b =>
-                {
-                    b.Property<int>("Id")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
-
-                    b.Property<bool>("Activo")
-                        .HasColumnType("bit");
-
-                    b.Property<string>("Descripcion")
-                        .HasMaxLength(200)
-                        .HasColumnType("nvarchar(200)");
-
-                    b.Property<string>("Icono")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("Nombre")
-                        .IsRequired()
-                        .HasMaxLength(100)
-                        .HasColumnType("nvarchar(100)");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("TipoTiendas");
                 });
 
             modelBuilder.Entity("TiendaApi.Models.Transaccion", b =>
@@ -758,10 +687,6 @@ namespace TiendaApi.Migrations
                     b.Property<bool>("IsVerified")
                         .HasColumnType("bit");
 
-                    b.Property<string>("ModoTema")
-                        .HasMaxLength(20)
-                        .HasColumnType("nvarchar(20)");
-
                     b.Property<string>("Nombre")
                         .IsRequired()
                         .HasMaxLength(100)
@@ -780,9 +705,6 @@ namespace TiendaApi.Migrations
 
                     b.Property<string>("Telefono")
                         .HasColumnType("nvarchar(max)");
-
-                    b.Property<DateTime?>("UltimaSesion")
-                        .HasColumnType("datetime2");
 
                     b.Property<string>("VerificationToken")
                         .HasColumnType("nvarchar(max)");
@@ -882,7 +804,7 @@ namespace TiendaApi.Migrations
             modelBuilder.Entity("TiendaApi.Models.Pedido", b =>
                 {
                     b.HasOne("TiendaApi.Models.Usuario", "Cliente")
-                        .WithMany("Pedidos")
+                        .WithMany()
                         .HasForeignKey("ClienteId")
                         .OnDelete(DeleteBehavior.Restrict);
 
@@ -896,6 +818,10 @@ namespace TiendaApi.Migrations
                         .HasForeignKey("TiendaId")
                         .OnDelete(DeleteBehavior.Restrict)
                         .IsRequired();
+
+                    b.HasOne("TiendaApi.Models.Usuario", null)
+                        .WithMany("Pedidos")
+                        .HasForeignKey("UsuarioId");
 
                     b.Navigation("Cliente");
 
@@ -998,20 +924,13 @@ namespace TiendaApi.Migrations
                         .HasForeignKey("PlanId")
                         .OnDelete(DeleteBehavior.SetNull);
 
-                    b.HasOne("TiendaApi.Models.TipoTienda", "TipoTienda")
-                        .WithMany("Tiendas")
-                        .HasForeignKey("TipoTiendaId")
-                        .OnDelete(DeleteBehavior.SetNull);
-
                     b.HasOne("TiendaApi.Models.Usuario", "Usuario")
                         .WithMany("Tiendas")
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Plan");
-
-                    b.Navigation("TipoTienda");
 
                     b.Navigation("Usuario");
                 });
@@ -1029,7 +948,7 @@ namespace TiendaApi.Migrations
                     b.HasOne("TiendaApi.Models.Usuario", "Usuario")
                         .WithMany("Transacciones")
                         .HasForeignKey("UsuarioId")
-                        .OnDelete(DeleteBehavior.Restrict)
+                        .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
 
                     b.Navigation("Comision");
@@ -1102,11 +1021,6 @@ namespace TiendaApi.Migrations
                     b.Navigation("Pedidos");
 
                     b.Navigation("Productos");
-                });
-
-            modelBuilder.Entity("TiendaApi.Models.TipoTienda", b =>
-                {
-                    b.Navigation("Tiendas");
                 });
 
             modelBuilder.Entity("TiendaApi.Models.Usuario", b =>
