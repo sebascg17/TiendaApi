@@ -26,7 +26,6 @@ namespace TiendaApi.Models
         [Required]
         public int Stock { get; set; } = 0;
 
-        [MaxLength(255)]
         public string? ImagenUrl { get; set; }
 
         public bool Activo { get; set; } = true;

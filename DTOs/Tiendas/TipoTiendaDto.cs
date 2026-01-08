@@ -9,6 +9,7 @@ namespace TiendaApi.DTOs.Tiendas
         public string Nombre { get; set; } = string.Empty;
         public string? Descripcion { get; set; }
         public string? Icono { get; set; }
+        public string? ImagenUrl { get; set; }
         public bool Activo { get; set; }
     }
 
@@ -19,5 +20,6 @@ namespace TiendaApi.DTOs.Tiendas
         [MaxLength(200)]
         public string? Descripcion { get; set; }
         public string? Icono { get; set; }
+        public string? ImagenUrl { get; set; }
     }
 }

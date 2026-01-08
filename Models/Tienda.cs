@@ -54,6 +54,9 @@ namespace TiendaApi.Models
         [MaxLength(100)]
         public string? Ciudad { get; set; }
 
+        [MaxLength(100)]
+        public string? Barrio { get; set; }
+
         [MaxLength(255)]
         public string? Direccion { get; set; }
 

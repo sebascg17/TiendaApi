@@ -29,6 +29,7 @@ namespace TiendaApi.Controllers
                     Nombre = t.Nombre,
                     Descripcion = t.Descripcion,
                     Icono = t.Icono,
+                    ImagenUrl = t.ImagenUrl,
                     Activo = t.Activo
                 })
                 .ToListAsync();
@@ -43,6 +44,7 @@ namespace TiendaApi.Controllers
                 Nombre = dto.Nombre,
                 Descripcion = dto.Descripcion,
                 Icono = dto.Icono,
+                ImagenUrl = dto.ImagenUrl,
                 Activo = true
             };
 
@@ -55,6 +57,7 @@ namespace TiendaApi.Controllers
                 Nombre = tipo.Nombre,
                 Descripcion = tipo.Descripcion,
                 Icono = tipo.Icono,
+                ImagenUrl = tipo.ImagenUrl,
                 Activo = tipo.Activo
             });
         }
@@ -69,6 +72,7 @@ namespace TiendaApi.Controllers
             tipo.Nombre = dto.Nombre;
             tipo.Descripcion = dto.Descripcion;
             tipo.Icono = dto.Icono;
+            tipo.ImagenUrl = dto.ImagenUrl;
 
             await _context.SaveChangesAsync();
             return NoContent();

@@ -22,16 +22,24 @@ namespace TiendaApi.Controllers
         // GET: api/tiendas (Obtener todas las tiendas - Público)
         [HttpGet]
         [AllowAnonymous]
-        public async Task<IActionResult> GetTiendas()
+        public async Task<IActionResult> GetTiendas([FromQuery] int? tipo)
         {
-            var tiendas = await _context.Tiendas
+            var query = _context.Tiendas.AsQueryable();
+
+            if (tipo.HasValue)
+            {
+                query = query.Where(t => t.TipoTiendaId == tipo.Value);
+            }
+
+            var tiendas = await query
                 .Select(t => new
                 {
                     t.Id,
                     t.Nombre,
                     t.Descripcion,
                     t.LogoUrl,
-                    t.Estado
+                    t.Estado,
+                    t.TipoTiendaId // Return Type ID for frontend reference if needed
                 })
                 .ToListAsync();
 
@@ -79,8 +87,9 @@ namespace TiendaApi.Controllers
                 Pais = dto.Pais,
                 Departamento = dto.Departamento,
                 Ciudad = dto.Ciudad,
+                Barrio = dto.Barrio,
                 UsuarioId = usuarioId,
-                Estado = "inactivo", 
+                Estado = "activo", 
                 FechaCreacion = DateTime.UtcNow,
                 ColorPrimario = dto.ColorPrimario,
                 Telefono = dto.Telefono,
@@ -96,6 +105,7 @@ namespace TiendaApi.Controllers
                 MinutoApertura = dto.MinutoApertura,
                 HoraCierre = dto.HoraCierre,
                 MinutoCierre = dto.MinutoCierre,
+                LogoUrl = dto.LogoUrl,
                 TipoTiendaId = dto.TipoTiendaId
             };
 
@@ -150,6 +160,7 @@ namespace TiendaApi.Controllers
             tienda.Pais = dto.Pais;
             tienda.Departamento = dto.Departamento;
             tienda.Ciudad = dto.Ciudad;
+            tienda.Barrio = dto.Barrio;
             tienda.ColorPrimario = dto.ColorPrimario;
             tienda.Telefono = dto.Telefono;
             tienda.Email = dto.Email;
@@ -218,5 +229,24 @@ namespace TiendaApi.Controllers
 
             return Ok(tiendas);
         }
+
+        // PATCH: api/tiendas/{id}/status
+        [HttpPatch("{id}/status")]
+        [Authorize(Roles = "Admin")]
+        public async Task<IActionResult> ToggleStoreStatus(int id, [FromBody] StatusDto dto)
+        {
+            var tienda = await _context.Tiendas.FindAsync(id);
+            if (tienda == null) return NotFound();
+
+            tienda.Estado = dto.Estado;
+            await _context.SaveChangesAsync();
+
+            return Ok(new { message = $"Se ha cambiado el estado a {dto.Estado}." });
+        }
+    }
+
+    public class StatusDto
+    {
+        public string Estado { get; set; }
     }
 }

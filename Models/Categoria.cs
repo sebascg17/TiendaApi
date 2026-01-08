@@ -19,6 +19,8 @@ namespace TiendaApi.Models
         [MaxLength(500)]
         public string? Descripcion { get; set; }
 
+        public string? ImagenUrl { get; set; }
+
         [ForeignKey("Tienda")]
         public int? TiendaId { get; set; } // null = categoría global
 

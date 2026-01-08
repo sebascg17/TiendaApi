@@ -15,6 +15,8 @@ namespace TiendaApi.Models
         public string? Descripcion { get; set; }
 
         public string? Icono { get; set; } // Ej: "pi-shopping-bag", "pi-briefcase"
+        
+        public string? ImagenUrl { get; set; }
 
         public bool Activo { get; set; } = true;
 

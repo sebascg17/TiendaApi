@@ -26,6 +26,8 @@ namespace TiendaApi.DTOs.Tiendas
 
         [MaxLength(100)]
         public string? Ciudad { get; set; }
+        
+        public string? Barrio { get; set; }
 
         public string? LogoUrl { get; set; }
         public int? PlanId { get; set; }

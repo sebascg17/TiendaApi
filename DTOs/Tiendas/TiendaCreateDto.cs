@@ -16,6 +16,7 @@ namespace TiendaApi.DTOs.Tiendas
         public string? Pais { get; set; }
         public string? Departamento { get; set; }
         public string? Ciudad { get; set; }
+        public string? Barrio { get; set; }
         
         public string? Telefono { get; set; }
         public string? Email { get; set; }
@@ -37,6 +38,7 @@ namespace TiendaApi.DTOs.Tiendas
 
         [Required]
         public string Slug { get; set; } = string.Empty;
+        public string? LogoUrl { get; set; }
         public decimal? Latitud { get; set; }
         public decimal? Longitud { get; set; }
 

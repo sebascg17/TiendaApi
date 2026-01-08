@@ -3,6 +3,7 @@ using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using TiendaApi.Infrastructure;
 
@@ -11,9 +12,11 @@ using TiendaApi.Infrastructure;
 namespace TiendaApi.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260108012251_AddBarrioToTienda")]
+    partial class AddBarrioToTienda
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -36,9 +39,6 @@ namespace TiendaApi.Migrations
 
                     b.Property<DateTime>("FechaCreacion")
                         .HasColumnType("datetime2");
-
-                    b.Property<string>("ImagenUrl")
-                        .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
                         .IsRequired()
@@ -645,9 +645,6 @@ namespace TiendaApi.Migrations
                         .HasColumnType("nvarchar(200)");
 
                     b.Property<string>("Icono")
-                        .HasColumnType("nvarchar(max)");
-
-                    b.Property<string>("ImagenUrl")
                         .HasColumnType("nvarchar(max)");
 
                     b.Property<string>("Nombre")
