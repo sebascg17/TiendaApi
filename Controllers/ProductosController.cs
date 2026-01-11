@@ -149,6 +149,7 @@ namespace TiendaApi.Controllers
                 Nombre = dto.Nombre,
                 Descripcion = dto.Descripcion,
                 Precio = dto.Precio,
+                Stock = dto.Stock,
                 ImagenUrl = dto.ImagenUrl,
                 ProductoCategorias = dto.CategoriasIds.Select(cid => new ProductoCategoria
                 {
@@ -203,6 +204,7 @@ namespace TiendaApi.Controllers
             // Actualizamos propiedades
             producto.Nombre = dto.Nombre;
             producto.Precio = dto.Precio;
+            producto.Stock = dto.Stock;
 
             // Actualizamos relación muchos a muchos
             producto.ProductoCategorias.Clear();

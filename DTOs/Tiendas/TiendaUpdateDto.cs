@@ -49,5 +49,6 @@ namespace TiendaApi.DTOs.Tiendas
         public string? Slug { get; set; }
         public decimal? Latitud { get; set; }
         public decimal? Longitud { get; set; }
+        public string? Estado { get; set; }
     }
 }

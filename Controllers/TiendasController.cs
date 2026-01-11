@@ -179,6 +179,9 @@ namespace TiendaApi.Controllers
             
             if (!string.IsNullOrEmpty(dto.LogoUrl))
                 tienda.LogoUrl = dto.LogoUrl;
+            
+            if (!string.IsNullOrEmpty(dto.Estado))
+                tienda.Estado = dto.Estado;
 
             await _context.SaveChangesAsync();
             return Ok(new { message = "Tienda actualizada correctamente." });
@@ -231,12 +234,23 @@ namespace TiendaApi.Controllers
         }
 
         // PATCH: api/tiendas/{id}/status
+        // PATCH: api/tiendas/{id}/status
         [HttpPatch("{id}/status")]
-        [Authorize(Roles = "Admin")]
+        [Authorize(Roles = "Admin,Tendero")]
         public async Task<IActionResult> ToggleStoreStatus(int id, [FromBody] StatusDto dto)
         {
             var tienda = await _context.Tiendas.FindAsync(id);
             if (tienda == null) return NotFound();
+
+            var userIdClaim = User.FindFirst("id")?.Value;
+            if (string.IsNullOrEmpty(userIdClaim)) return Unauthorized();
+
+            // Allow if Admin OR if Owner
+            if (!User.IsInRole("Admin"))
+            {
+               if (tienda.UsuarioId != int.Parse(userIdClaim)) 
+                   return Forbid("No tienes permiso para modificar esta tienda.");
+            }
 
             tienda.Estado = dto.Estado;
             await _context.SaveChangesAsync();
